@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  nome           String
+  email          String   @unique
+  password       String
+  role           String   @default("USER") // ADMIN or USER
+  onboardingDone Boolean  @default(false)
+  onboardingData String?  // Armazenar JSON como string para flexibilidade
+  avatarUrl      String?  // Foto de perfil do usuário (Base64)
+  createdAt      DateTime @default(now())
+  
+  transactions   Transaction[]
+  chatMessages   ChatMessage[]
+  categories     Category[]
+  goals          Goal[]
+  notifications  Notification[]
+  follows        Follow[]     @relation("UserFollowing")
+  followedBy     Follow[]     @relation("UserFollowers")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  tipo      String   // "follower", "goal", "system"
+  mensagem  String
+  lida      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  tipo      String   // "gasto" or "ganho"
+  isGlobal  Boolean  @default(false)
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  transactions Transaction[]
+
+  @@unique([nome, userId])
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  tipo        String   // "gasto" or "ganho"
+  valor       Float
+  categoriaId Int
+  categoria   Category @relation(fields: [categoriaId], references: [id])
+  descricao   String?
+  data        String   // YYYY-MM-DD
+  createdAt   DateTime @default(now())
+  
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  texto     String
+  sender    String   // "user" or "bot"
+  createdAt DateTime @default(now())
+  
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model TrainingExample {
+  id                Int      @id @default(autoincrement())
+  texto             String   @unique
+  categoriaOriginal String
+  categoriaNova     String
+  corrigidoEm       DateTime @default(now())
+}
+
+model Goal {
+  id        Int      @id @default(autoincrement())
+  name      String
+  target    Float
+  current   Float    @default(0)
+  color     String   @default("#3b82f6")
+  icon      String   @default("Target")
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  followingId Int
+  createdAt   DateTime @default(now())
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id])
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}

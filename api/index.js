@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const prisma = require('./lib/prisma');
+const db = require('./lib/db');
 const {
   signToken, hashPassword, comparePassword,
   authMiddleware, adminMiddleware
@@ -67,14 +67,19 @@ function parseMoney(text) {
 }
 
 // Helper para garantir categoria (busca global ou do usuário)
+// Helper para garantir categoria (busca global ou do usuário)
 async function ensureCategory(nome, tipo, userId) {
-  let cat = await prisma.category.findFirst({
-    where: { nome: { equals: nome }, OR: [{ userId: null }, { userId }] }
-  });
+  let result = await db.query(
+    'SELECT * FROM "Category" WHERE nome = $1 AND ("userId" IS NULL OR "userId" = $2)',
+    [nome, userId]
+  );
+  let cat = result.rows[0];
   if (!cat) {
-    cat = await prisma.category.create({
-      data: { nome, tipo, userId }
-    });
+    const insert = await db.query(
+      'INSERT INTO "Category" (nome, tipo, "userId") VALUES ($1, $2, $3) RETURNING *',
+      [nome, tipo, userId]
+    );
+    cat = insert.rows[0];
   }
   return cat;
 }
@@ -91,16 +96,17 @@ app.post('/api/auth/register', async (req, res) => {
   }
 
   try {
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) return res.status(400).json({ error: 'E-mail já cadastrado' });
+    const existingResult = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    if (existingResult.rows.length > 0) return res.status(400).json({ error: 'E-mail já cadastrado' });
 
     const hashedPassword = await hashPassword(password);
-    const userCount = await prisma.user.count();
     const role = (adminCode === 'ADMIN123') ? 'ADMIN' : 'USER';
 
-    const user = await prisma.user.create({
-      data: { nome, email, password: hashedPassword, role }
-    });
+    const insertResult = await db.query(
+      'INSERT INTO "User" (nome, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *',
+      [nome, email, hashedPassword, role]
+    );
+    const user = insertResult.rows[0];
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
     res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingDone } });
@@ -112,7 +118,8 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const result = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    const user = result.rows[0];
     if (!user || !(await comparePassword(password, user.password))) {
       return res.status(401).json({ error: 'E-mail ou senha inválidos' });
     }
@@ -128,9 +135,10 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
 app.get('/api/me', authMiddleware, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const result = await db.query('SELECT * FROM "User" WHERE id = $1', [req.user.id]);
+    const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
-    res.json({ ...req.user, onboardingDone: user.onboardingDone, onboardingData: user.onboardingData ? JSON.parse(user.onboardingData) : null, avatarUrl: user.avatarUrl });
+    res.json({ ...req.user, onboardingDone: user.onboardingdone, onboardingData: user.onboardingdata ? JSON.parse(user.onboardingdata) : null, avatarUrl: user.avatarurl });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao validar sessão' });
   }
@@ -143,105 +151,115 @@ app.post('/api/user/avatar', authMiddleware, async (req, res) => {
   // Apenas aceita strings base64
   if (avatar.length > 5000000) return res.status(413).json({ error: 'Imagem muito grande' });
 
-  await prisma.user.update({
-    where: { id: req.user.id },
-    data: { avatarUrl: avatar }
-  });
+  await db.query(
+    'UPDATE "User" SET "avatarUrl" = $1 WHERE id = $2',
+    [avatar, req.user.id]
+  );
   res.json({ success: true, avatarUrl: avatar });
 });
 
 app.post('/api/user/onboarding', authMiddleware, async (req, res) => {
   const { onboardingData } = req.body;
-  await prisma.user.update({
-    where: { id: req.user.id },
-    data: { onboardingDone: true, onboardingData: JSON.stringify(onboardingData) }
-  });
+  await db.query(
+    'UPDATE "User" SET "onboardingDone" = TRUE, "onboardingData" = $1 WHERE id = $2',
+    [JSON.stringify(onboardingData), req.user.id]
+  );
   res.json({ success: true });
 });
 
 // ─── Category Routes ──────────────────────────────────────────────────────────
 
 app.get('/api/categories', authMiddleware, async (req, res) => {
-  const categories = await prisma.category.findMany({
-    where: { OR: [{ userId: null }, { userId: req.user.id }] },
-    orderBy: { nome: 'asc' }
-  });
-  res.json(categories);
+  const result = await db.query(
+    'SELECT * FROM "Category" WHERE "userId" IS NULL OR "userId" = $1 ORDER BY nome ASC',
+    [req.user.id]
+  );
+  res.json(result.rows);
 });
 
 app.post('/api/categories', authMiddleware, async (req, res) => {
   const { nome, tipo } = req.body;
-  const existing = await prisma.category.findFirst({
-    where: { nome, userId: req.user.id }
-  });
-  if (existing) return res.status(400).json({ error: 'Categoria já existe' });
+  const existing = await db.query(
+    'SELECT * FROM "Category" WHERE nome = $1 AND "userId" = $2',
+    [nome, req.user.id]
+  );
+  if (existing.rows.length > 0) return res.status(400).json({ error: 'Categoria já existe' });
 
-  const cat = await prisma.category.create({
-    data: { nome, tipo, userId: req.user.id }
-  });
-  res.json(cat);
+  const result = await db.query(
+    'INSERT INTO "Category" (nome, tipo, "userId") VALUES ($1, $2, $3) RETURNING *',
+    [nome, tipo, req.user.id]
+  );
+  res.json(result.rows[0]);
 });
 
 app.delete('/api/categories/:id', authMiddleware, async (req, res) => {
   const id = parseInt(req.params.id);
-  const cat = await prisma.category.findUnique({ where: { id } });
-  if (!cat || cat.userId !== req.user.id) return res.status(403).json({ error: 'Não permitido' });
+  const check = await db.query('SELECT * FROM "Category" WHERE id = $1', [id]);
+  const cat = check.rows[0];
+  if (!cat || (cat.userId && cat.userId !== req.user.id)) return res.status(403).json({ error: 'Não permitido' });
 
   // Mover transações para 'Outros' antes de deletar
   const outros = await ensureCategory('Outros', cat.tipo, null);
-  await prisma.transaction.updateMany({
-    where: { categoriaId: id, userId: req.user.id },
-    data: { categoriaId: outros.id }
-  });
+  await db.query(
+    'UPDATE "Transaction" SET "categoriaId" = $1 WHERE "categoriaId" = $2 AND "userId" = $3',
+    [outros.id, id, req.user.id]
+  );
 
-  await prisma.category.delete({ where: { id } });
+  await db.query('DELETE FROM "Category" WHERE id = $1', [id]);
   res.json({ success: true });
 });
 
 // ─── Transaction Routes ───────────────────────────────────────────────────────
 
 app.get('/api/transactions', authMiddleware, async (req, res) => {
-  const transactions = await prisma.transaction.findMany({
-    where: { userId: req.user.id },
-    include: { categoria: true },
-    orderBy: { data: 'desc' }
-  });
-  res.json(transactions);
+  const result = await db.query(
+    `SELECT t.*, c.nome as categoria_nome, c.tipo as categoria_tipo 
+     FROM "Transaction" t 
+     LEFT JOIN "Category" c ON t."categoriaId" = c.id 
+     WHERE t."userId" = $1 
+     ORDER BY t.data DESC`,
+    [req.user.id]
+  );
+  // Formatar para manter compatibilidade: trans.categoria.nome -> trans.categoria_nome
+  const formatted = result.rows.map(r => ({
+    ...r,
+    categoria: { nome: r.categoria_nome, tipo: r.categoria_tipo }
+  }));
+  res.json(formatted);
 });
 
 app.put('/api/transactions/:id', authMiddleware, async (req, res) => {
   const { valor, descricao, data, categoriaId, tipo } = req.body;
   const id = parseInt(req.params.id);
 
-  const trans = await prisma.transaction.update({
-    where: { id, userId: req.user.id },
-    data: { valor, descricao, data, categoriaId, tipo }
-  });
-  res.json(trans);
+  const result = await db.query(
+    'UPDATE "Transaction" SET valor = $1, descricao = $2, data = $3, "categoriaId" = $4, tipo = $5 WHERE id = $6 AND "userId" = $7 RETURNING *',
+    [valor, descricao, data, categoriaId, tipo, id, req.user.id]
+  );
+  res.json(result.rows[0]);
 });
 
 app.delete('/api/transactions/:id', authMiddleware, async (req, res) => {
-  await prisma.transaction.delete({
-    where: { id: parseInt(req.params.id), userId: req.user.id }
-  });
+  await db.query('DELETE FROM "Transaction" WHERE id = $1 AND "userId" = $2', [parseInt(req.params.id), req.user.id]);
   res.json({ success: true });
 });
 
 // ─── Goals Routes ────────────────────────────────────────────────────────────
 
 app.get('/api/goals', authMiddleware, async (req, res) => {
-  const goals = await prisma.goal.findMany({ where: { userId: req.user.id } });
-  res.json(goals);
+  const result = await db.query('SELECT * FROM "Goal" WHERE "userId" = $1', [req.user.id]);
+  res.json(result.rows);
 });
 
 app.post('/api/goals', authMiddleware, async (req, res) => {
   const { name, target, current, color, icon } = req.body;
   if (!name || target === undefined) return res.status(400).json({ error: 'Nome e valor alvo são obrigatórios' });
   try {
-    const goal = await prisma.goal.create({
-      data: { name, target: Number(target), current: Number(current) || 0, color: color || '#3b82f6', icon: icon || 'Target', userId: req.user.id }
-    });
-    res.json(goal);
+    const result = await db.query(
+      'INSERT INTO "Goal" (name, target, current, color, icon, "userId") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [name, Number(target), Number(current) || 0, color || '#3b82f6', icon || 'Target', req.user.id]
+    );
+    res.json(result.rows[0]);
   } catch (e) {
     console.error('[POST /goals]', e);
     res.status(500).json({ error: 'Erro ao criar meta' });
@@ -250,18 +268,13 @@ app.post('/api/goals', authMiddleware, async (req, res) => {
 
 app.put('/api/goals/:id', authMiddleware, async (req, res) => {
   const { current, name, target, color, icon } = req.body;
-  const updateData = {};
-  if (current !== undefined) updateData.current = Number(current);
-  if (name) updateData.name = name;
-  if (target !== undefined) updateData.target = Number(target);
-  if (color) updateData.color = color;
-  if (icon) updateData.icon = icon;
+  const id = parseInt(req.params.id);
   try {
-    const goal = await prisma.goal.update({
-      where: { id: parseInt(req.params.id), userId: req.user.id },
-      data: updateData
-    });
-    res.json(goal);
+    const result = await db.query(
+      'UPDATE "Goal" SET current = COALESCE($1, current), name = COALESCE($2, name), target = COALESCE($3, target), color = COALESCE($4, color), icon = COALESCE($5, icon) WHERE id = $6 AND "userId" = $7 RETURNING *',
+      [current, name, target, color, icon, id, req.user.id]
+    );
+    res.json(result.rows[0]);
   } catch (e) {
     console.error('[PUT /goals]', e);
     res.status(500).json({ error: 'Erro ao atualizar meta' });
@@ -270,7 +283,7 @@ app.put('/api/goals/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/goals/:id', authMiddleware, async (req, res) => {
   try {
-    await prisma.goal.delete({ where: { id: parseInt(req.params.id), userId: req.user.id } });
+    await db.query('DELETE FROM "Goal" WHERE id = $1 AND "userId" = $2', [parseInt(req.params.id), req.user.id]);
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Erro ao deletar meta' });
@@ -280,19 +293,18 @@ app.delete('/api/goals/:id', authMiddleware, async (req, res) => {
 // ─── Notification Routes ─────────────────────────────────────────────────────
 
 app.get('/api/notifications', authMiddleware, async (req, res) => {
-  const notifications = await prisma.notification.findMany({
-    where: { userId: req.user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 20
-  });
-  res.json(notifications);
+  const result = await db.query(
+    'SELECT * FROM "Notification" WHERE "userId" = $1 ORDER BY "createdAt" DESC LIMIT 20',
+    [req.user.id]
+  );
+  res.json(result.rows);
 });
 
 app.put('/api/notifications/read-all', authMiddleware, async (req, res) => {
-  await prisma.notification.updateMany({
-    where: { userId: req.user.id, lida: false },
-    data: { lida: true }
-  });
+  await db.query(
+    'UPDATE "Notification" SET lida = TRUE WHERE "userId" = $1 AND lida = FALSE',
+    [req.user.id]
+  );
   res.json({ success: true });
 });
 
@@ -302,37 +314,41 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: 'Mensagem é obrigatória' });
 
-  await prisma.chatMessage.create({ data: { texto: message, sender: 'user', userId: req.user.id } });
+  await db.query(
+    'INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)',
+    [message, 'user', req.user.id]
+  );
 
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const userResult = await db.query('SELECT * FROM "User" WHERE id = $1', [req.user.id]);
+    const user = userResult.rows[0];
     if (!user) return res.status(401).json({ error: 'Usuário não encontrado ou sessão expirada' });
-    const onboarding = user.onboardingData ? JSON.parse(user.onboardingData) : {};
-    const categories = await prisma.category.findMany({ where: { OR: [{ userId: null }, { userId: req.user.id }] } });
-    const catList = categories.map(c => c.nome).join(', ');
+    const onboarding = user.onboardingdata ? JSON.parse(user.onboardingdata) : {};
 
-    const history = await prisma.chatMessage.findMany({
-      where: { userId: req.user.id },
-      take: 8,
-      orderBy: { createdAt: 'desc' }
-    });
-    const historyText = history.reverse().map(m => `${m.sender === 'user' ? user.nome : 'Mentor'}: ${m.texto}`).join('\n');
+    const catResult = await db.query('SELECT nome FROM "Category" WHERE "userId" IS NULL OR "userId" = $1', [req.user.id]);
+    const catList = catResult.rows.map(c => c.nome).join(', ');
 
-    // Pegar as últimas 3 transações para contexto
-    const recentTrans = await prisma.transaction.findMany({
-      where: { userId: req.user.id },
-      orderBy: { createdAt: 'desc' },
-      take: 3,
-      include: { categoria: true }
-    });
-    const transContext = recentTrans.length > 0
-      ? recentTrans.map(t => `- ${t.tipo === 'gasto' ? '💸 Gastou' : '💰 Ganhou'} R$${t.valor} em ${t.categoria.nome} (${t.data})`).join('\n')
+    const histResult = await db.query(
+      'SELECT * FROM "ChatMessage" WHERE "userId" = $1 ORDER BY "createdAt" DESC LIMIT 8',
+      [req.user.id]
+    );
+    const historyText = histResult.rows.reverse().map(m => `${m.sender === 'user' ? user.nome : 'Mentor'}: ${m.texto}`).join('\n');
+
+    const transResult = await db.query(
+      `SELECT t.*, c.nome as categoria_nome 
+       FROM "Transaction" t 
+       LEFT JOIN "Category" c ON t."categoriaId" = c.id 
+       WHERE t."userId" = $1 
+       ORDER BY t.createdAt DESC LIMIT 3`,
+      [req.user.id]
+    );
+    const transContext = transResult.rows.length > 0
+      ? transResult.rows.map(t => `- ${t.tipo === 'gasto' ? '💸 Gastou' : '💰 Ganhou'} R$${t.valor} em ${t.categoria_nome} (${t.data})`).join('\n')
       : '(Nenhuma transação recente)';
 
-    const today = new Date().toISOString().split('T')[0];
-    const userGoals = await prisma.goal.findMany({ where: { userId: req.user.id } });
-    const goalsContext = userGoals.length > 0
-      ? userGoals.map(g => `- "${g.name}": R$ ${g.current?.toFixed(2)} / R$ ${g.target?.toFixed(2)}`).join('\n')
+    const goalsResult = await db.query('SELECT * FROM "Goal" WHERE "userId" = $1', [req.user.id]);
+    const goalsContext = goalsResult.rows.length > 0
+      ? goalsResult.rows.map(g => `- "${g.name}": R$ ${g.current?.toFixed(2)} / R$ ${g.target?.toFixed(2)}`).join('\n')
       : '(sem metas cadastradas)';
 
     const prompt = `${historyText}\n\nMentor: Olá, ${user.nome}! Percebi que você está com o objetivo de ${onboarding.objective || 'se organizar'}. 
@@ -373,37 +389,41 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       const nomeMeta = aiResponse.nome || 'Nova Meta';
       const valorAlvo = Number(aiResponse.valor_alvo) || 0;
       if (valorAlvo > 0) {
-        const novaMeta = await prisma.goal.create({
-          data: { name: nomeMeta, target: valorAlvo, current: 0, color: '#3b82f6', icon: 'Target', userId: req.user.id }
-        });
+        const insert = await db.query(
+          'INSERT INTO "Goal" (name, target, current, color, icon, "userId") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+          [nomeMeta, valorAlvo, 0, '#3b82f6', 'Target', req.user.id]
+        );
+        const novaMeta = insert.rows[0];
         const botMsg = `🎯 Meta criada com sucesso! "${novaMeta.name}" — Alvo: R$ ${valorAlvo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Você pode acompanhar e depositar na aba Metas!`;
-        await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       } else {
         const botMsg = `Para criar uma meta, informe o valor alvo! Ex: "cria uma meta de viagem de R$ 5.000"`;
-        await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
     }
 
     // ── Listar metas ─────────────────────────────────────────────────────────
     if (aiResponse.tipo === 'listar_metas') {
-      const metas = await prisma.goal.findMany({ where: { userId: req.user.id } });
+      const goalsResult = await db.query('SELECT * FROM "Goal" WHERE "userId" = $1', [req.user.id]);
+      const metas = goalsResult.rows;
       if (metas.length === 0) {
         const botMsg = `Você ainda não tem metas cadastradas. Quer criar uma agora? Diga algo como "cria uma meta de viagem de R$ 5.000"!`;
-        await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
       const totalGuardado = metas.reduce((acc, m) => acc + m.current, 0);
       const listaStr = metas.map(m => `• ${m.name}: R$ ${m.current.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R$ ${m.target.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${Math.round((m.current / m.target) * 100)}%)`).join('\n');
       const botMsg = `📊 Suas metas:\n${listaStr}\n\n💰 Total guardado: R$ ${totalGuardado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+      await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
       return res.json({ success: true, message: botMsg });
     }
 
     // ── Movimentar meta existente ────────────────────────────────────────────
     if (aiResponse.tipo === 'meta') {
-      const metasNoBanco = await prisma.goal.findMany({ where: { userId: req.user.id } });
+      const metasResult = await db.query('SELECT * FROM "Goal" WHERE "userId" = $1', [req.user.id]);
+      const metasNoBanco = metasResult.rows;
       const termo = (aiResponse.meta || '').toLowerCase();
       let targetGoal = metasNoBanco.find(m => m.name.toLowerCase().includes(termo));
       if (!targetGoal && metasNoBanco.length > 0) targetGoal = metasNoBanco[0];
@@ -414,25 +434,22 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
         else if (aiResponse.acao === 'remover') newVal -= aiResponse.valor;
         newVal = Math.max(0, newVal);
 
-        await prisma.goal.update({ where: { id: targetGoal.id }, data: { current: newVal } });
+        await db.query('UPDATE "Goal" SET current = $1 WHERE id = $2', [newVal, targetGoal.id]);
 
         // Notificação de meta concluída
         if (newVal >= targetGoal.target) {
-          await prisma.notification.create({
-            data: {
-              tipo: 'goal',
-              mensagem: `🎯 Parabéns! Você concluiu sua meta: ${targetGoal.name}!`,
-              userId: req.user.id
-            }
-          });
+          await db.query(
+            'INSERT INTO "Notification" (tipo, mensagem, "userId") VALUES ($1, $2, $3)',
+            ['goal', `🎯 Parabéns! Você concluiu sua meta: ${targetGoal.name}!`, req.user.id]
+          );
         }
 
         const botMsg = `🎯 Feito! Movimentei R$ ${aiResponse.valor} na sua meta "${targetGoal.name}". Novo saldo: R$ ${newVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-        await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       } else {
         const botMsg = `Não encontrei a meta "${aiResponse.meta}". Suas metas atuais: ${metasNoBanco.map(m => m.name).join(', ') || 'nenhuma'}. Crie uma dizendo "cria uma meta de X"!`;
-        await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
     }
@@ -440,75 +457,72 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     // ── Registrar gasto/ganho ─────────────────────────────────────────────────
     if (aiResponse.tipo === 'gasto' || aiResponse.tipo === 'ganho') {
       const cat = await ensureCategory(aiResponse.categoria, aiResponse.tipo, req.user.id);
-      const trans = await prisma.transaction.create({
-        data: {
-          tipo: aiResponse.tipo,
-          valor: aiResponse.valor,
-          categoriaId: cat.id,
-          descricao: aiResponse.descricao || message,
-          data: aiResponse.data || today,
-          userId: req.user.id
-        }
-      });
+      const insert = await db.query(
+        'INSERT INTO "Transaction" (tipo, valor, "categoriaId", descricao, data, "userId") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [aiResponse.tipo, aiResponse.valor, cat.id, aiResponse.descricao || message, aiResponse.data || today, req.user.id]
+      );
+      const trans = insert.rows[0];
       const emoji = aiResponse.tipo === 'gasto' ? '💸' : '💰';
       const botMsg = `${emoji} Registrei: ${trans.tipo} de R$ ${trans.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em ${aiResponse.categoria}${aiResponse.descricao ? ` — "${aiResponse.descricao}"` : ''}`;
-      await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+      await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
       return res.json({ success: true, data: trans, message: botMsg });
     }
 
     // ── Resumo Dashboard ──────────────────────────────────────────────────────
     if (aiResponse.tipo === 'dashboard_resumo') {
-      const trans = await prisma.transaction.findMany({ where: { userId: req.user.id } });
+      const transResult = await db.query('SELECT * FROM "Transaction" WHERE "userId" = $1', [req.user.id]);
+      const trans = transResult.rows;
       const gastos = trans.filter(t => t.tipo === 'gasto').reduce((sum, t) => sum + t.valor, 0);
       const ganhos = trans.filter(t => t.tipo === 'ganho').reduce((sum, t) => sum + t.valor, 0);
       const saldo = ganhos - gastos;
       const botMsg = `📊 **Seu Dashboard Atual:** \n\n🟢 Entradas: R$ ${ganhos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n🔴 Saídas: R$ ${gastos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n💰 Saldo Atual: R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nVocê está indo bem! Quer alguma dica de investimento para esse saldo?`;
-      await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+      await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
       return res.json({ success: true, message: botMsg });
     }
 
     // ── Rede Social (Buscar e Seguir) ─────────────────────────────────────────
     if (aiResponse.tipo === 'social_buscar' || aiResponse.tipo === 'social_seguir') {
       const nomeBusca = aiResponse.nome || '';
-      const usuarios = await prisma.user.findMany({ where: { nome: { contains: nomeBusca }, id: { not: req.user.id } }, take: 5 });
+      const userResult = await db.query(
+        'SELECT * FROM "User" WHERE nome ILIKE $1 AND id <> $2 LIMIT 5',
+        [`%${nomeBusca}%`, req.user.id]
+      );
+      const usuarios = userResult.rows;
 
       if (usuarios.length === 0) {
         const botMsg = `Não encontrei ninguém chamado "${nomeBusca}" na rede social. 😕`;
-        await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
 
       if (aiResponse.tipo === 'social_seguir') {
         const alvo = usuarios[0];
         try {
-          await prisma.follow.create({ data: { followerId: req.user.id, followingId: alvo.id } });
+          await db.query('INSERT INTO "Follow" ("followerId", "followingId") VALUES ($1, $2)', [req.user.id, alvo.id]);
 
           // Notificação para quem foi seguido
-          await prisma.notification.create({
-            data: {
-              tipo: 'follower',
-              mensagem: `👤 ${user.nome} começou a seguir você!`,
-              userId: alvo.id
-            }
-          });
+          await db.query(
+            'INSERT INTO "Notification" (tipo, mensagem, "userId") VALUES ($1, $2, $3)',
+            ['follower', `👤 ${user.nome} começou a seguir você!`, alvo.id]
+          );
 
           const botMsg = `✅ Comecei a seguir **${alvo.nome}** pra você! Vá na aba Social para conferir.`;
-          await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+          await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
           return res.json({ success: true, message: botMsg });
         } catch {
           const botMsg = `Você já segue **${alvo.nome}**!`;
-          await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+          await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
           return res.json({ success: true, message: botMsg });
         }
       } else {
         const botMsg = `🔍 Achei estas pessoas: ${usuarios.map(u => u.nome).join(', ')}. Se quiser posso seguir algum deles! Diga "seguir [nome]".`;
-        await prisma.chatMessage.create({ data: { texto: botMsg, sender: 'bot', userId: req.user.id } });
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
     }
 
     const conversaMsg = aiResponse.resposta || 'Não entendi. Pode me dizer um gasto, ganho, pedir resumo do dashboard ou alguma dica financeira?';
-    await prisma.chatMessage.create({ data: { texto: conversaMsg, sender: 'bot', userId: req.user.id } });
+    await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [conversaMsg, 'bot', req.user.id]);
     res.json({ success: true, message: conversaMsg });
 
   } catch (error) {
@@ -518,12 +532,11 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/chat/history', authMiddleware, async (req, res) => {
-  const history = await prisma.chatMessage.findMany({
-    where: { userId: req.user.id },
-    orderBy: { createdAt: 'asc' },
-    take: 50
-  });
-  res.json(history);
+  const result = await db.query(
+    'SELECT * FROM "ChatMessage" WHERE "userId" = $1 ORDER BY "createdAt" ASC LIMIT 50',
+    [req.user.id]
+  );
+  res.json(result.rows);
 });
 
 // ─── Social / Follow Routes ───────────────────────────────────────────────────
@@ -533,27 +546,19 @@ app.get('/api/social/search', authMiddleware, async (req, res) => {
   if (!q) return res.json([]);
 
   try {
-    const users = await prisma.user.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { nome: { contains: q } },
-              { email: { contains: q } }
-            ]
-          },
-          { id: { not: req.user.id } }
-        ]
-      },
-      take: 15,
-      select: { id: true, nome: true, avatarUrl: true, email: true }
-    });
+    const userResult = await db.query(
+      `SELECT id, nome, "avatarUrl", email 
+       FROM "User" 
+       WHERE (nome ILIKE $1 OR email ILIKE $1) AND id <> $2 
+       LIMIT 15`,
+      [`%${q}%`, req.user.id]
+    );
 
     // Verificar quais já estamos seguindo
-    const myFollows = await prisma.follow.findMany({ where: { followerId: req.user.id } });
-    const followingIds = new Set(myFollows.map(f => f.followingId));
+    const followResult = await db.query('SELECT "followingId" FROM "Follow" WHERE "followerId" = $1', [req.user.id]);
+    const followingIds = new Set(followResult.rows.map(f => f.followingId));
 
-    const result = users.map(u => ({
+    const result = userResult.rows.map(u => ({
       id: u.id,
       nome: u.nome,
       avatarUrl: u.avatarUrl,
@@ -566,27 +571,30 @@ app.get('/api/social/search', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/social/following', authMiddleware, async (req, res) => {
-  const follows = await prisma.follow.findMany({
-    where: { followerId: req.user.id },
-    include: { following: { select: { id: true, nome: true, avatarUrl: true } } }
-  });
-  const result = follows.map(f => ({ ...f.following, isFollowing: true }));
-  res.json(result);
-});
+const result = await db.query(
+  `SELECT u.id, u.nome, u."avatarUrl" 
+     FROM "Follow" f 
+     JOIN "User" u ON f."followingId" = u.id 
+     WHERE f."followerId" = $1`,
+  [req.user.id]
+);
+const formatted = result.rows.map(u => ({ ...u, isFollowing: true }));
+res.json(formatted);
 
 app.get('/api/social/followers', authMiddleware, async (req, res) => {
-  const follows = await prisma.follow.findMany({
-    where: { followingId: req.user.id },
-    include: { follower: { select: { id: true, nome: true, avatarUrl: true } } }
-  });
+  const result = await db.query(
+    `SELECT u.id, u.nome, u."avatarUrl" 
+     FROM "Follow" f 
+     JOIN "User" u ON f."followerId" = u.id 
+     WHERE f."followingId" = $1`,
+    [req.user.id]
+  );
 
-  // Verificar quais desses eu também sigo de volta
-  const myFollows = await prisma.follow.findMany({ where: { followerId: req.user.id } });
-  const followingIds = new Set(myFollows.map(f => f.followingId));
+  const myFollowsResult = await db.query('SELECT "followingId" FROM "Follow" WHERE "followerId" = $1', [req.user.id]);
+  const followingIds = new Set(myFollowsResult.rows.map(f => f.followingId));
 
-  const result = follows.map(f => ({ ...f.follower, isFollowing: followingIds.has(f.follower.id) }));
-  res.json(result);
+  const formatted = result.rows.map(u => ({ ...u, isFollowing: followingIds.has(u.id) }));
+  res.json(formatted);
 });
 
 app.post('/api/social/follow/:id', authMiddleware, async (req, res) => {
@@ -594,7 +602,7 @@ app.post('/api/social/follow/:id', authMiddleware, async (req, res) => {
   if (followingId === req.user.id) return res.status(400).json({ error: 'Você não pode seguir a si mesmo' });
 
   try {
-    await prisma.follow.create({ data: { followerId: req.user.id, followingId } });
+    await db.query('INSERT INTO "Follow" ("followerId", "followingId") VALUES ($1, $2)', [req.user.id, followingId]);
     res.json({ success: true });
   } catch (e) {
     res.status(400).json({ error: 'Já está seguindo este usuário' });
@@ -603,41 +611,47 @@ app.post('/api/social/follow/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/social/follow/:id', authMiddleware, async (req, res) => {
   const followingId = parseInt(req.params.id);
-  await prisma.follow.deleteMany({ where: { followerId: req.user.id, followingId } });
+  await db.query('DELETE FROM "Follow" WHERE "followerId" = $1 AND "followingId" = $2', [req.user.id, followingId]);
   res.json({ success: true });
 });
 
 app.post('/api/correct', authMiddleware, async (req, res) => {
   const { transactionId, novaCategoriaId } = req.body;
-  const trans = await prisma.transaction.update({
-    where: { id: transactionId, userId: req.user.id },
-    data: { categoriaId: novaCategoriaId }
-  });
+  await db.query(
+    'UPDATE "Transaction" SET "categoriaId" = $1 WHERE id = $2 AND "userId" = $3',
+    [novaCategoriaId, transactionId, req.user.id]
+  );
   res.json({ success: true });
 });
 
 // ─── Admin Routes ─────────────────────────────────────────────────────────────
 
 app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
-  const userCount = await prisma.user.count();
-  const transCount = await prisma.transaction.count();
-  const sumVal = await prisma.transaction.aggregate({ _sum: { valor: true } });
-  const recentUsers = await prisma.user.findMany({ take: 10, orderBy: { createdAt: 'desc' }, select: { id: true, nome: true, email: true, role: true, createdAt: true, onboardingDone: true } });
+  try {
+    const userCountResult = await db.query('SELECT COUNT(*) FROM "User"');
+    const transCountResult = await db.query('SELECT COUNT(*) FROM "Transaction"');
+    const sumValResult = await db.query('SELECT SUM(valor) FROM "Transaction"');
+    const recentUsersResult = await db.query('SELECT id, nome, email, role, "createdAt", "onboardingDone" FROM "User" ORDER BY "createdAt" DESC LIMIT 10');
 
-  const transByDay = await prisma.transaction.groupBy({
-    by: ['data'],
-    _count: { id: true },
-    where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
-    orderBy: { data: 'asc' }
-  });
+    const transByDayResult = await db.query(
+      `SELECT data, COUNT(id) as count 
+       FROM "Transaction" 
+       WHERE "createdAt" >= NOW() - INTERVAL '7 days' 
+       GROUP BY data 
+       ORDER BY data ASC`
+    );
 
-  res.json({
-    totalUsers: userCount,
-    totalTransactions: transCount,
-    totalVolume: sumVal._sum.valor || 0,
-    recentUsers,
-    activity: transByDay
-  });
+    res.json({
+      totalUsers: parseInt(userCountResult.rows[0].count),
+      totalTransactions: parseInt(transCountResult.rows[0].count),
+      totalVolume: parseFloat(sumValResult.rows[0].sum || 0),
+      recentUsers: recentUsersResult.rows,
+      activity: transByDayResult.rows
+    });
+  } catch (e) {
+    console.error('[admin/stats]', e);
+    res.status(500).json({ error: 'Erro ao buscar estatísticas' });
+  }
 });
 
 // ─── Fallback Parser Helper ──────────────────────────────────────────────────

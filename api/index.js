@@ -571,15 +571,22 @@ app.get('/api/social/search', authMiddleware, async (req, res) => {
   }
 });
 
-const result = await db.query(
-  `SELECT u.id, u.nome, u."avatarUrl" 
-     FROM "Follow" f 
-     JOIN "User" u ON f."followingId" = u.id 
-     WHERE f."followerId" = $1`,
-  [req.user.id]
-);
-const formatted = result.rows.map(u => ({ ...u, isFollowing: true }));
-res.json(formatted);
+app.get('/api/social/following', authMiddleware, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT u.id, u.nome, u."avatarUrl" 
+       FROM "Follow" f 
+       JOIN "User" u ON f."followingId" = u.id 
+       WHERE f."followerId" = $1`,
+      [req.user.id]
+    );
+    const formatted = result.rows.map(u => ({ ...u, isFollowing: true }));
+    res.json(formatted);
+  } catch (e) {
+    console.error('[social/following]', e);
+    res.json([]);
+  }
+});
 
 app.get('/api/social/followers', authMiddleware, async (req, res) => {
   const result = await db.query(

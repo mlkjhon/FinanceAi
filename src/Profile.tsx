@@ -70,7 +70,7 @@ const Profile = () => {
 
                 // Send to backend
                 const token = localStorage.getItem('token');
-                await fetch('http://localhost:5000/api/user/avatar', {
+                await fetch('/api/user/avatar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ avatar: base64String })

@@ -111,7 +111,8 @@ app.post('/api/auth/register', async (req, res) => {
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
     res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingDone } });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao registrar usuário' });
+    console.error('[Register Error]:', err);
+    res.status(500).json({ error: 'Erro ao registrar usuário', details: err.message });
   }
 });
 
@@ -127,7 +128,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
     res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingDone, onboardingData: user.onboardingData ? JSON.parse(user.onboardingData) : null, avatarUrl: user.avatarUrl } });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao fazer login' });
+    console.error('[Login Error]:', err);
+    res.status(500).json({ error: 'Erro ao fazer login', details: err.message });
   }
 });
 

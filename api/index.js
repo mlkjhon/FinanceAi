@@ -14,6 +14,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+console.log('--- DIAGNÓSTICO DE BANCO ---');
+console.log('Conectando ao banco em:', (process.env.DATABASE_URL || '').split('@')[1]);
+db.query('SELECT current_database(), current_schema()')
+  .then(res => console.log('✅ Banco Conectado:', res.rows[0]))
+  .catch(err => console.error('❌ Erro de Conexão:', err.message));
+console.log('---------------------------');
+
 // Proteção Básica de Headers
 app.use(helmet());
 
@@ -128,7 +135,7 @@ app.post('/api/auth/register', async (req, res) => {
     const user = insertResult.rows[0];
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
-    res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingDone } });
+    res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone } });
   } catch (err) {
     console.error('[Register Error]:', err);
     res.status(500).json({ error: 'Erro ao registrar usuário', details: err.message });

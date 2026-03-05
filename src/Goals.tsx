@@ -83,7 +83,8 @@ const Goals = () => {
         if (transactionType === 'add') newCurrent += amountFloat;
         else newCurrent -= amountFloat;
 
-        newCurrent = Math.max(0, newCurrent);
+        // Limita o valor mínimo a 0 e o máximo ao alvo da meta
+        newCurrent = Math.max(0, Math.min(newCurrent, goal.target));
 
         try {
             await api.put(`/goals/${activeGoalId}`, { current: newCurrent });
@@ -192,7 +193,7 @@ const Goals = () => {
                                         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>R$ {goal.current.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} guardados</div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button onClick={() => { setActiveGoalId(goal.id); setTransactionType('add'); setTransactionAmount(''); }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', border: 'none', color: '#10b981', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={18} /></button>
+                                        <button disabled={goal.current >= goal.target} onClick={() => { setActiveGoalId(goal.id); setTransactionType('add'); setTransactionAmount(''); }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: goal.current >= goal.target ? 'rgba(255,255,255,0.05)' : 'rgba(16,185,129,0.1)', border: 'none', color: goal.current >= goal.target ? 'rgba(255,255,255,0.2)' : '#10b981', cursor: goal.current >= goal.target ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={18} /></button>
                                         <button onClick={() => { setActiveGoalId(goal.id); setTransactionType('remove'); setTransactionAmount(''); }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={18} /></button>
                                     </div>
                                 </div>

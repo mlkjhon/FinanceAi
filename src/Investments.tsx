@@ -217,7 +217,7 @@ const Investments = () => {
                         >Ver Todas as Taxas</button>
                     </div>
 
-                    <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #1e3a8a, #4338ca)', border: 'none' }}>
+                    <div style={{ ...cardStyle, background: 'rgba(5,5,5,0.8)', border: '1px solid rgba(239,68,68,0.3)', borderLeft: '4px solid #ef4444' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                             <ShieldCheck size={20} />
                             <span style={{ fontWeight: 700, fontSize: '14px' }}>Dica do Mentor</span>

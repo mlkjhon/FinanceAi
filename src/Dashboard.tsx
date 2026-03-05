@@ -10,6 +10,7 @@ import {
   Plus, Calendar, Tag, FileText, AlertCircle, PieChart, BarChart3, Target, UploadCloud, BrainCircuit, Loader2, Play
 } from 'lucide-react';
 import api from './api';
+import { useToast } from './components/Toast';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
@@ -51,6 +52,7 @@ const CategoryManager = ({ categories, onClose, onRefresh }: {
 }) => {
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState<'gasto' | 'ganho'>('gasto');
+  const { showToast } = useToast();
 
   const handleAdd = async () => {
     if (!nome) return;
@@ -58,7 +60,8 @@ const CategoryManager = ({ categories, onClose, onRefresh }: {
       await api.post('/categories', { nome, tipo });
       setNome('');
       onRefresh();
-    } catch (err: any) { alert(err.response?.data?.error || 'Erro ao adicionar'); }
+      showToast('Categoria adicionada!', 'success');
+    } catch (err: any) { showToast(err.response?.data?.error || 'Erro ao adicionar', 'error'); }
   };
 
   const handleDelete = async (id: number) => {
@@ -190,6 +193,7 @@ const EditModal = ({ transaction, categories, onClose, onSave }: {
 const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: () => void }) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleUpload = async () => {
     if (!file) return;
@@ -200,13 +204,10 @@ const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: (
       const { data } = await api.post('/upload-extract', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      // Após extrair o texto, mandamos o texto para o Chat em 'background' ou processamos via popup.
-      // Para manter simples, enviamos a string extraída diretamente como mensagem pro Chat processar (Batch)
-      alert(`Extrato processado! O AI analisou ${data.text.split('\\n').length} linhas. Feche a janela e peça para o Chat registrar.`);
+      showToast(`Extrato processado! O AI analisou ${data.text.split('\n').length} linhas. Feche a janela e peça para o Chat registrar.`, 'success');
       setFile(null);
-      // Aqui faríamos idealmente: api.post('/chat', { message: `Analyze this extract:\n${data.text}` });
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Erro na importação');
+      showToast(err.response?.data?.error || 'Erro na importação', 'error');
     } finally {
       setLoading(false);
       onClose();
@@ -258,6 +259,7 @@ const Dashboard = () => {
   const [insights, setInsights] = useState<any>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [filterText, setFilterText] = useState('');
+  const { showToast, confirm } = useToast();
 
   const fetchData = async () => {
     try {
@@ -288,11 +290,13 @@ const Dashboard = () => {
   useEffect(() => { fetchData(); fetchInsights(); }, []);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Excluir esta transação permanente?')) return;
-    try {
-      await api.delete(`/transactions/${id}`);
-      fetchData();
-    } catch (err) { console.error(err); }
+    confirm('Excluir esta transação permanente?', async () => {
+      try {
+        await api.delete(`/transactions/${id}`);
+        fetchData();
+        showToast('Transação excluída.', 'success');
+      } catch (err: any) { showToast(err.response?.data?.error || 'Erro ao excluir', 'error'); }
+    });
   };
 
   const handleUpdate = async (data: Transaction) => {

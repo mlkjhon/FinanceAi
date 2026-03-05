@@ -12,6 +12,7 @@ import Onboarding from './Onboarding';
 import { MessageSquare, LayoutDashboard, LogOut, ShieldCheck, User as UserIcon, TrendingUp, Target, Users, Bell } from 'lucide-react';
 import Social from './Social';
 import api from './api';
+import { ToastProvider, useToast } from './components/Toast';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 interface User {
@@ -108,9 +109,7 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
           {navItem('/dashboard', 'Dashboard', LayoutDashboard)}
           {navItem('/investments', 'Investimentos', TrendingUp)}
           {navItem('/goals', 'Metas', Target)}
-          {navItem('/social', 'Social', Users)}
           {isAdmin && navItem('/admin', 'Admin', ShieldCheck)}
-          {navItem('/profile', 'Perfil', UserIcon)}
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -168,17 +167,19 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '4px 4px 4px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <Link to="/profile" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', padding: '4px 4px 4px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}>
             {user.avatarUrl && <img src={user.avatarUrl} alt="Avatar" style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} />}
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>{user.nome}</span>
-            <button
-              onClick={onLogout}
-              style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', borderRadius: '10px', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              title="Sair"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
+          </Link>
+          <button
+            onClick={onLogout}
+            style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', borderRadius: '10px', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.2)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}
+            title="Sair"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </header>
 
@@ -302,28 +303,30 @@ const App = () => {
   }
 
   return (
-    <Router>
-      {showOnboarding && user && (
-        <Onboarding
-          userName={user.nome}
-          onComplete={completeOnboarding}
-          loading={onboardingLoading}
-          error={onboardingError}
-        />
-      )}
-      <Routes>
-        {!user ? (
-          <>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<Auth onLogin={handleLogin} />} />
-            <Route path="/auth/login" element={<Auth onLogin={handleLogin} />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </>
-        ) : (
-          <Route path="*" element={<AppLayout user={user} onLogout={handleLogout} />} />
+    <ToastProvider>
+      <Router>
+        {showOnboarding && user && (
+          <Onboarding
+            userName={user.nome}
+            onComplete={completeOnboarding}
+            loading={onboardingLoading}
+            error={onboardingError}
+          />
         )}
-      </Routes>
-    </Router>
+        <Routes>
+          {!user ? (
+            <>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<Auth onLogin={handleLogin} />} />
+              <Route path="/auth/login" element={<Auth onLogin={handleLogin} />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </>
+          ) : (
+            <Route path="*" element={<AppLayout user={user} onLogout={handleLogout} />} />
+          )}
+        </Routes>
+      </Router>
+    </ToastProvider>
   );
 };
 

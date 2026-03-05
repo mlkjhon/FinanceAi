@@ -188,6 +188,8 @@ const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [onboardingError, setOnboardingError] = useState('');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -224,14 +226,19 @@ const App = () => {
   };
 
   const completeOnboarding = async (data: any) => {
+    setOnboardingLoading(true);
+    setOnboardingError('');
     try {
       await api.post('/user/onboarding', { onboardingData: data });
       setShowOnboarding(false);
       const updatedUser = user ? { ...user, onboardingDone: true, onboardingData: JSON.stringify(data) } : null;
       setUser(updatedUser);
       if (updatedUser) localStorage.setItem('user', JSON.stringify(updatedUser));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao salvar onboarding', err);
+      setOnboardingError(err?.response?.data?.error || 'Erro ao salvar. Tente novamente.');
+    } finally {
+      setOnboardingLoading(false);
     }
   };
 
@@ -241,7 +248,14 @@ const App = () => {
 
   return (
     <Router>
-      {showOnboarding && user && <Onboarding userName={user.nome} onComplete={completeOnboarding} />}
+      {showOnboarding && user && (
+        <Onboarding
+          userName={user.nome}
+          onComplete={completeOnboarding}
+          loading={onboardingLoading}
+          error={onboardingError}
+        />
+      )}
       <Routes>
         {!user ? (
           <>

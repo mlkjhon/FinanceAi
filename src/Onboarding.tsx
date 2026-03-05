@@ -8,6 +8,8 @@ import {
 interface OnboardingProps {
     userName: string;
     onComplete: (data: any) => void;
+    loading?: boolean;
+    error?: string;
 }
 
 const steps = [
@@ -17,7 +19,7 @@ const steps = [
     { id: 'dream', title: 'Sonho', subtitle: 'Sua meta de vida.' }
 ];
 
-const Onboarding = ({ userName, onComplete }: OnboardingProps) => {
+const Onboarding = ({ userName, onComplete, loading = false, error = '' }: OnboardingProps) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [data, setData] = useState({
         objective: '',
@@ -179,35 +181,45 @@ const Onboarding = ({ userName, onComplete }: OnboardingProps) => {
 
                 {renderStep()}
 
-                <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
-                    {currentStep > 0 && (
-                        <button
-                            onClick={back}
-                            style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                            <ArrowLeft size={18} />
-                        </button>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '32px', flexDirection: 'column' }}>
+                    {error && (
+                        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', color: '#f87171', fontSize: '13px', textAlign: 'center' }}>
+                            {error}
+                        </div>
                     )}
-                    <button
-                        onClick={next}
-                        disabled={
-                            (currentStep === 0 && !data.objective) ||
-                            (currentStep === 1 && !data.profile) ||
-                            (currentStep === 2 && !data.income) ||
-                            (currentStep === 3 && !data.dream)
-                        }
-                        style={{
-                            flex: 1, padding: '14px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', borderRadius: '14px', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 8px 20px rgba(59,130,246,0.3)', transition: 'all 0.2s', opacity: (
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        {currentStep > 0 && (
+                            <button
+                                onClick={back}
+                                disabled={loading}
+                                style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', color: 'white', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: loading ? 0.5 : 1 }}
+                            >
+                                <ArrowLeft size={18} />
+                            </button>
+                        )}
+                        <button
+                            onClick={next}
+                            disabled={
+                                loading ||
                                 (currentStep === 0 && !data.objective) ||
                                 (currentStep === 1 && !data.profile) ||
                                 (currentStep === 2 && !data.income) ||
                                 (currentStep === 3 && !data.dream)
-                            ) ? 0.5 : 1
-                        }}
-                    >
-                        {currentStep === steps.length - 1 ? 'Concluir' : 'Próximo'}
-                        <ArrowRight size={16} />
-                    </button>
+                            }
+                            style={{
+                                flex: 1, padding: '14px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', borderRadius: '14px', color: 'white', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 8px 20px rgba(59,130,246,0.3)', transition: 'all 0.2s', opacity: (
+                                    loading ||
+                                    (currentStep === 0 && !data.objective) ||
+                                    (currentStep === 1 && !data.profile) ||
+                                    (currentStep === 2 && !data.income) ||
+                                    (currentStep === 3 && !data.dream)
+                                ) ? 0.5 : 1
+                            }}
+                        >
+                            {loading ? 'Salvando...' : (currentStep === steps.length - 1 ? 'Concluir' : 'Próximo')}
+                            {!loading && <ArrowRight size={16} />}
+                        </button>
+                    </div>
                 </div>
             </div>
 

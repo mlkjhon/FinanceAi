@@ -162,11 +162,16 @@ app.post('/api/user/avatar', authMiddleware, async (req, res) => {
 
 app.post('/api/user/onboarding', authMiddleware, async (req, res) => {
   const { onboardingData } = req.body;
-  await db.query(
-    'UPDATE "User" SET "onboardingDone" = TRUE, "onboardingData" = $1 WHERE id = $2',
-    [JSON.stringify(onboardingData), req.user.id]
-  );
-  res.json({ success: true });
+  try {
+    await db.query(
+      'UPDATE "User" SET "onboardingDone" = TRUE, "onboardingData" = $1 WHERE id = $2',
+      [JSON.stringify(onboardingData), req.user.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Onboarding Error]:', err);
+    res.status(500).json({ error: 'Erro ao salvar onboarding', details: err.message });
+  }
 });
 
 // ─── Category Routes ──────────────────────────────────────────────────────────

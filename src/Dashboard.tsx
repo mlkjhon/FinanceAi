@@ -407,6 +407,32 @@ const Dashboard = () => {
         ))}
       </div>
 
+      {/* Spending Pattern Alerts — per category */}
+      {(() => {
+        const gastoTotal = totalGastos;
+        const alertas = Object.entries(gastosPorCat)
+          .filter(([, v]) => gastoTotal > 0 && (v as number) / gastoTotal > 0.35)
+          .map(([cat, v]) => ({ cat, pct: Math.round(((v as number) / gastoTotal) * 100) }));
+        if (!alertas.length) return null;
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <AlertCircle size={18} color="#f43f5e" />
+              <span style={{ fontWeight: 800, fontSize: '16px', color: '#f43f5e' }}>Alertas de Padrão de Gastos</span>
+            </div>
+            {alertas.map(({ cat, pct }) => (
+              <div key={cat} style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.25)', borderRadius: '16px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '15px' }}>⚠️ Gasto elevado em <span style={{ color: '#f87171' }}>{cat}</span></div>
+                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Representa {pct}% dos seus gastos totais — acima do recomendado (35%).</div>
+                </div>
+                <div style={{ background: 'rgba(244,63,94,0.2)', borderRadius: '12px', padding: '8px 14px', fontWeight: 900, color: '#f43f5e', fontSize: '18px' }}>{pct}%</div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* Smart Insights Panel */}
       {insights ? (
         <div className="glass" style={{ ...cardContentStyle, background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(0,0,0,0.8))', border: '1px solid rgba(239, 68, 68, 0.2)', position: 'relative', overflow: 'hidden' }}>
@@ -449,6 +475,27 @@ const Dashboard = () => {
 
           <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
             "{insights.motivation}"
+          </div>
+
+          {/* Action Plan Section */}
+          <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Target size={18} color="#f87171" />
+              <span style={{ fontWeight: 800, fontSize: '16px' }}>Plano de Ação Inteligente</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                totalGastos > totalGanhos && `💸 Seus gastos (${fmt(totalGastos)}) superam seus ganhos. Corte gastos não essenciais imediatamente.`,
+                insights.savings_tip && `💡 ${insights.savings_tip}`,
+                insights.predictive_tip && `📈 ${insights.predictive_tip}`,
+                insights.fraud_alert && `🔔 Comportamento fora do padrão detectado. Revise lançamentos recentes suspeitos.`,
+                goals.length > 0 && goals.some((g: any) => g.current < g.target * 0.5) && `🎯 Algumas metas estão abaixo de 50%. Considere aportes adicionais este mês.`
+              ].filter(Boolean).map((item, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
+                  {item as string}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       ) : loadingInsights ? (

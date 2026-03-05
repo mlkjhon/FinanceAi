@@ -208,6 +208,23 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
           </Routes>
         </div>
       </main>
+
+      {/* Security & Privacy Banner */}
+      <footer style={{
+        borderTop: '1px solid rgba(255,255,255,0.04)',
+        padding: '12px 32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        background: 'rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(10px)',
+      }}>
+        <ShieldCheck size={14} color="#10b981" />
+        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>
+          Dados protegidos por <strong style={{ color: 'rgba(255,255,255,0.5)' }}>criptografia de ponta a ponta</strong>. Nunca compartilhamos suas informações financeiras.
+        </span>
+      </footer>
     </div>
   );
 };

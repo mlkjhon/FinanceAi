@@ -216,7 +216,7 @@ const Goals = () => {
                             )}
 
                             <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div style={{ width: `${percent}%`, height: '100%', background: goal.color, borderRadius: '4px', transition: 'width 1s ease-out' }} />
+                                <div style={{ width: `${percent}%`, height: '100%', background: 'linear-gradient(90deg, #b91c1c, #ef4444)', borderRadius: '4px', transition: 'width 1s ease-out' }} />
                             </div>
                         </div>
                     );

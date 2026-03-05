@@ -256,7 +256,7 @@ const Dashboard = () => {
   const [insights, setInsights] = useState<any>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [filterText, setFilterText] = useState('');
-  const { showToast, confirm } = useToast();
+  const { showToast } = useToast();
 
   const fetchData = async () => {
     try {
@@ -287,13 +287,12 @@ const Dashboard = () => {
   useEffect(() => { fetchData(); fetchInsights(); }, []);
 
   const handleDelete = async (id: number) => {
-    confirm('Excluir esta transação permanente?', async () => {
-      try {
-        await api.delete(`/transactions/${id}`);
-        fetchData();
-        showToast('Transação excluída.', 'success');
-      } catch (err: any) { showToast(err.response?.data?.error || 'Erro ao excluir', 'error'); }
-    });
+    if (!window.confirm('Excluir esta transação permanentemente?')) return;
+    try {
+      await api.delete(`/transactions/${id}`);
+      fetchData();
+      showToast('Transação excluída.', 'success');
+    } catch (err: any) { showToast(err.response?.data?.error || 'Erro ao excluir', 'error'); }
   };
 
   const handleUpdate = async (data: Transaction) => {
@@ -617,7 +616,11 @@ const Dashboard = () => {
                   <td style={{ padding: '20px 32px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.6)' }}>
                       <Calendar size={14} />
-                      {new Date(t.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                      {(() => {
+                        // Avoid UTC timezone offset shifting the date by parsing directly
+                        const [y, m, d] = (t.data || '').split('-');
+                        return `${d}/${m}/${y}`;
+                      })()}
                     </div>
                   </td>
                   <td style={{ padding: '20px 32px' }}>

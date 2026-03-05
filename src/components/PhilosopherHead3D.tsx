@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useScroll } from 'framer-motion';
-import { Icosahedron, Wireframe, Float, MeshDistortMaterial } from '@react-three/drei';
+import { useScroll, useSpring } from 'framer-motion';
+import { useGLTF, Float, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 
 const PhilosopherHead3D = () => {
@@ -9,78 +9,98 @@ const PhilosopherHead3D = () => {
     const { scrollYProgress } = useScroll();
     const { viewport } = useThree();
 
-    useFrame((state, delta) => {
+    // Use the downloaded realistic head model
+    const { nodes } = useGLTF('/philosopher.glb') as any;
+
+    useFrame((state) => {
         if (!groupRef.current) return;
 
-        // Current scroll progress (0 to 1)
         const scroll = scrollYProgress.get();
 
-        // Rotate the head based on scroll
+        // Rotation: Slow spin that accelerates with scroll
         groupRef.current.rotation.y = THREE.MathUtils.lerp(
             groupRef.current.rotation.y,
-            scroll * Math.PI * 2, // Rotate 360 degrees as we scroll down
-            0.1
+            scroll * Math.PI * 4,
+            0.05
         );
 
-        // Move the head vertically or horizontally based on scroll to "follow the info"
-        // Move from center-right (hero) to left (features)
-        const targetX = THREE.MathUtils.lerp(viewport.width / 4, -viewport.width / 4, scroll);
-        const targetY = THREE.MathUtils.lerp(0, viewport.height / 4, scroll);
+        // Position: Moves from right side (Hero) to left side (Features) to center (CTA)
+        let targetX = viewport.width / 4;
+        let targetY = 0;
 
-        groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, targetX, 0.05);
-        groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY, 0.05);
+        if (scroll > 0.3) {
+            targetX = -viewport.width / 3.5;
+            targetY = -viewport.height / 8;
+        }
+        if (scroll > 0.7) {
+            targetX = 0;
+            targetY = 0;
+        }
 
-        // Gentle breathing animation
-        groupRef.current.position.y += Math.sin(state.clock.elapsedTime) * 0.002;
+        groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, targetX, 0.03);
+        groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY, 0.03);
+
+        // Breathing / Floating
+        groupRef.current.position.y += Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
     });
 
     return (
         <group ref={groupRef}>
-            <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
-                {/* As an abstract representation of an AI Philosopher, we use a complex Icosahedron */}
-                <mesh castShadow receiveShadow>
-                    <icosahedronGeometry args={[2.5, 1]} />
-                    <MeshDistortMaterial
-                        color="#050505"
-                        emissive="#ef4444"
-                        emissiveIntensity={0.5}
-                        wireframe
-                        distort={0.3}
-                        speed={2}
-                        roughness={0.2}
-                        metalness={1}
-                    />
-                </mesh>
-
-                {/* Inner Core */}
-                <mesh>
-                    <sphereGeometry args={[1.5, 32, 32]} />
-                    <meshStandardMaterial
-                        color="#000000"
-                        emissive="#991b1b"
-                        emissiveIntensity={2}
-                        roughness={0.1}
-                        metalness={0.8}
-                    />
-                </mesh>
-
-                {/* Floating particles around the head */}
-                {Array.from({ length: 15 }).map((_, i) => (
+            <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+                {/* Lee Perry Smith Head Model */}
+                {nodes && nodes.Mesh_Mesh_head_geo001_lambert2SG001 ? (
                     <mesh
-                        key={i}
-                        position={[
-                            Math.sin(i) * 3 + (Math.random() - 0.5),
-                            Math.cos(i) * 3 + (Math.random() - 0.5),
-                            Math.sin(i * 2) * 3 + (Math.random() - 0.5)
-                        ]}
+                        geometry={nodes.Mesh_Mesh_head_geo001_lambert2SG001.geometry}
+                        scale={12}
+                        rotation={[0, -Math.PI / 2, 0]}
                     >
-                        <boxGeometry args={[0.1, 0.1, 0.1]} />
-                        <meshBasicMaterial color={i % 2 === 0 ? "#ffffff" : "#ef4444"} />
+                        <meshStandardMaterial
+                            color="#111111"
+                            roughness={0.1}
+                            metalness={1}
+                            emissive="#ef4444"
+                            emissiveIntensity={0.2}
+                        />
                     </mesh>
-                ))}
+                ) : (
+                    /* Fallback to Socratic-like bust if nodes not found */
+                    <group>
+                        <mesh position={[0, -1, 0]}>
+                            <boxGeometry args={[2, 3, 1.5]} />
+                            <meshStandardMaterial color="#111111" roughness={0.1} metalness={1} />
+                        </mesh>
+                        <mesh position={[0, 1.5, 0]}>
+                            <sphereGeometry args={[1.2, 32, 32]} />
+                            <meshStandardMaterial
+                                color="#111111"
+                                roughness={0}
+                                metalness={1}
+                                emissive="#ef4444"
+                                emissiveIntensity={0.5}
+                            />
+                        </mesh>
+                    </group>
+                )}
+
+                {/* Cyberpunk accent ring around neck area */}
+                <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -1.2, 0]}>
+                    <torusGeometry args={[1.8, 0.05, 16, 100]} />
+                    <meshBasicMaterial color="#ef4444" />
+                </mesh>
             </Float>
+
+            <ContactShadows
+                position={[0, -4, 0]}
+                opacity={0.4}
+                scale={20}
+                blur={2}
+                far={4.5}
+            />
         </group>
     );
 };
+
+// Preload the model
+useGLTF.preload('/philosopher.glb');
 
 export default PhilosopherHead3D;

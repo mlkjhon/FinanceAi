@@ -152,7 +152,25 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     }
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
-    res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone, onboardingData: user.onboardingdata ? JSON.parse(user.onboardingdata) : null, avatarUrl: user.avatarurl } });
+
+    // Safely parse onboardingdata if it's a string, otherwise use as is
+    let onboardingData = user.onboardingdata;
+    if (typeof onboardingData === 'string') {
+      try { onboardingData = JSON.parse(onboardingData); } catch (e) { onboardingData = null; }
+    }
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        role: user.role,
+        onboardingDone: user.onboardingdone,
+        onboardingData,
+        avatarUrl: user.avatarurl
+      }
+    });
   } catch (err) {
     console.error('[Login Error]:', err);
     res.status(500).json({ error: 'Erro ao fazer login', details: err.message });
@@ -166,7 +184,11 @@ app.get('/api/me', authMiddleware, async (req, res) => {
     const result = await db.query('SELECT * FROM "User" WHERE id = $1', [req.user.id]);
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
-    res.json({ ...req.user, onboardingDone: user.onboardingdone, onboardingData: user.onboardingdata ? JSON.parse(user.onboardingdata) : null, avatarUrl: user.avatarurl });
+    let onboardingData = user.onboardingdata;
+    if (typeof onboardingData === 'string') {
+      try { onboardingData = JSON.parse(onboardingData); } catch (e) { onboardingData = null; }
+    }
+    res.json({ ...req.user, onboardingDone: user.onboardingdone, onboardingData, avatarUrl: user.avatarurl });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao validar sessão' });
   }

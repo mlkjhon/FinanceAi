@@ -5,8 +5,8 @@ import { useScroll } from 'framer-motion';
 import * as THREE from 'three';
 
 const SocratesModel = () => {
-    // Load the 3D Model from public/socrates.glb
-    const { scene } = useGLTF('/socrates.glb');
+    // Load the 3D Model from public/scene.gltf
+    const { scene } = useGLTF('/scene.gltf');
     const groupRef = useRef<THREE.Group>(null);
     const { scrollYProgress } = useScroll();
     const { viewport } = useThree();
@@ -30,25 +30,11 @@ const SocratesModel = () => {
     useFrame((state) => {
         if (!groupRef.current) return;
 
-        const scroll = scrollYProgress.get();
+        // 1. Continuous Slow Rotation (Elegant)
+        groupRef.current.rotation.y += 0.002;
 
-        // 1. Continuous rotation (base rotation + scroll-based extra rotation)
-        groupRef.current.rotation.y += 0.003;
-
-        // Add extra rotation effect smoothly when scrolling
-        const targetRotation = scroll * Math.PI;
-        groupRef.current.rotation.y = THREE.MathUtils.lerp(
-            groupRef.current.rotation.y,
-            groupRef.current.rotation.y + targetRotation,
-            0.02
-        );
-
-        // 2. Responsive Positioning & Parallax
-        const targetX = viewport.width > 5 ? viewport.width / 4 : 0;
-        const targetY = THREE.MathUtils.lerp(-1.5, viewport.height / 3, scroll);
-
-        groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, targetX, 0.05);
-        groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY, 0.05);
+        // No more scroll positioning here as requested
+        groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
     });
 
     return (
@@ -75,6 +61,6 @@ const SocratesModel = () => {
 };
 
 // Preload the model to ensure it doesn't flicker on load
-useGLTF.preload('/socrates.glb');
+useGLTF.preload('/scene.gltf');
 
 export default SocratesModel;

@@ -147,13 +147,7 @@ const LandingPage = () => {
             overflowX: 'hidden',
             position: 'relative'
         }}>
-            {/* Premium Interactive 3D Art */}
-            <div style={{ position: 'fixed', bottom: '-40px', right: '-15%', width: '85%', height: '110vh', zIndex: 0, pointerEvents: 'none', opacity: 0.9 }}>
-                <Canvas shadows camera={{ position: [0, 0, 8], fov: 45 }}>
-                    <Environment preset="city" />
-                    <SocratesModel />
-                </Canvas>
-            </div>
+
 
             {/* Foreground Content */}
             <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'auto' }}>
@@ -233,6 +227,14 @@ const LandingPage = () => {
                         >
                             Começar Agora <ChevronRight size={20} />
                         </button>
+                    </div>
+                    <div style={{ flex: 1, position: 'relative' }}>
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '150%', height: '150%', zIndex: -1, pointerEvents: 'none' }}>
+                            <Canvas shadows camera={{ position: [0, 0, 8], fov: 45 }}>
+                                <Environment preset="city" />
+                                <SocratesModel />
+                            </Canvas>
+                        </div>
                     </div>
                 </section>
 

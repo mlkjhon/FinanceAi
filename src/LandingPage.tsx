@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
-import PhilosopherHead3D from './components/PhilosopherHead3D';
+import { Environment } from '@react-three/drei';
+import SocratesModel from './components/SocratesModel';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
     ShieldCheck,
@@ -146,20 +147,13 @@ const LandingPage = () => {
             overflowX: 'hidden',
             position: 'relative'
         }}>
-            {/* Premium Philosopher 3D Art */}
-            <motion.div style={{ position: 'fixed', bottom: '-40px', right: '-15%', width: '85%', height: '110vh', zIndex: 0, pointerEvents: 'none', y, opacity }}>
-                <motion.img
-                    src="/hero-3d.png"
-                    alt="FinanceAI Philosopher"
-                    style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        filter: 'drop-shadow(0 0 100px rgba(255, 255, 255, 0.05))',
-                        rotateZ: rotate
-                    }}
-                />
-            </motion.div>
+            {/* Premium Interactive 3D Art */}
+            <div style={{ position: 'fixed', bottom: '-40px', right: '-15%', width: '85%', height: '110vh', zIndex: 0, pointerEvents: 'none', opacity: 0.9 }}>
+                <Canvas shadows camera={{ position: [0, 0, 8], fov: 45 }}>
+                    <Environment preset="city" />
+                    <SocratesModel />
+                </Canvas>
+            </div>
 
             {/* Foreground Content */}
             <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'auto' }}>

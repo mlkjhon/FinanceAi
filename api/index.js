@@ -14,13 +14,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-console.log('--- DIAGNÓSTICO DE BANCO ---');
-console.log('Conectando ao banco em:', (process.env.DATABASE_URL || '').split('@')[1]);
-db.query('SELECT current_database(), current_schema()')
-  .then(res => console.log('✅ Banco Conectado:', res.rows[0]))
-  .catch(err => console.error('❌ Erro de Conexão:', err.message));
-console.log('---------------------------');
-
 // Proteção Básica de Headers
 app.use(helmet());
 

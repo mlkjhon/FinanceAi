@@ -150,7 +150,7 @@ const LandingPage = () => {
         }}>
 
             {/* Background Interactive 3D Art - Fixed to follow scroll */}
-            <div style={{ position: 'fixed', top: '10%', right: '-10%', width: '60%', height: '80vh', zIndex: 0, pointerEvents: 'none', opacity: 0.8 }}>
+            <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', zIndex: 0, pointerEvents: 'none', opacity: 0.8 }}>
                 <Canvas shadows camera={{ position: [0, 0, 8], fov: 45 }}>
                     <Environment preset="city" />
                     <React.Suspense fallback={null}>

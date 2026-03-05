@@ -194,6 +194,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [editingTrans, setEditingTrans] = useState<Transaction | null>(null);
   const [showCatManager, setShowCatManager] = useState(false);
+  const [filterText, setFilterText] = useState('');
 
   const fetchData = async () => {
     try {
@@ -361,6 +362,25 @@ const Dashboard = () => {
         <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 800 }}>Movimentações Recentes</h2>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                style={{
+                  padding: '8px 12px 8px 36px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '12px',
+                  color: 'white',
+                  fontSize: '13px',
+                  outline: 'none',
+                  width: '200px',
+                  transition: 'all 0.2s'
+                }}
+                placeholder="Filtrar lançamentos..."
+                value={filterText}
+                onChange={e => setFilterText(e.target.value)}
+              />
+              <Clock style={{ position: 'absolute', left: '12px', color: 'rgba(255,255,255,0.2)' }} size={16} />
+            </div>
             <button
               onClick={() => setShowCatManager(true)}
               style={{ padding: '6px 14px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px', color: '#60a5fa', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
@@ -370,7 +390,12 @@ const Dashboard = () => {
               <Tag size={14} /> Gerenciar Categorias
             </button>
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>{transactions.length} registros</div>
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px' }}>
+            {transactions.filter(t =>
+              t.descricao?.toLowerCase().includes(filterText.toLowerCase()) ||
+              t.categoria?.nome.toLowerCase().includes(filterText.toLowerCase())
+            ).length} registros
+          </div>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
           <thead>
@@ -383,46 +408,51 @@ const Dashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {transactions.map(t => (
-              <tr key={t.id} style={{ borderTop: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}>
-                <td style={{ padding: '20px 32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.6)' }}>
-                    <Calendar size={14} />
-                    {new Date(t.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                  </div>
-                </td>
-                <td style={{ padding: '20px 32px' }}>
-                  <div style={{ fontWeight: 600 }}>{t.descricao}</div>
-                </td>
-                <td style={{ padding: '20px 32px' }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
-                    <Tag size={12} color="#60a5fa" />
-                    {t.categoria?.nome || 'Sem Categoria'}
-                  </div>
-                </td>
-                <td style={{ padding: '20px 32px', textAlign: 'right' }}>
-                  <div style={{ color: t.tipo === 'ganho' ? '#10b981' : '#f87171', fontWeight: 800, fontSize: '16px' }}>
-                    {t.tipo === 'ganho' ? '+' : '-'} {fmt(t.valor)}
-                  </div>
-                </td>
-                <td style={{ padding: '20px 32px', textAlign: 'center' }}>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => setEditingTrans(t)}
-                      style={{ padding: '8px', background: 'rgba(59,130,246,0.1)', border: 'none', borderRadius: '10px', color: '#60a5fa', cursor: 'pointer' }}
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(t.id)}
-                      style={{ padding: '8px', background: 'rgba(244,63,94,0.1)', border: 'none', borderRadius: '10px', color: '#f43f5e', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {transactions
+              .filter(t =>
+                t.descricao?.toLowerCase().includes(filterText.toLowerCase()) ||
+                t.categoria?.nome.toLowerCase().includes(filterText.toLowerCase())
+              )
+              .map(t => (
+                <tr key={t.id} style={{ borderTop: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}>
+                  <td style={{ padding: '20px 32px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.6)' }}>
+                      <Calendar size={14} />
+                      {new Date(t.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                    </div>
+                  </td>
+                  <td style={{ padding: '20px 32px' }}>
+                    <div style={{ fontWeight: 600 }}>{t.descricao}</div>
+                  </td>
+                  <td style={{ padding: '20px 32px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
+                      <Tag size={12} color="#60a5fa" />
+                      {t.categoria?.nome || 'Sem Categoria'}
+                    </div>
+                  </td>
+                  <td style={{ padding: '20px 32px', textAlign: 'right' }}>
+                    <div style={{ color: t.tipo === 'ganho' ? '#10b981' : '#f87171', fontWeight: 800, fontSize: '16px' }}>
+                      {t.tipo === 'ganho' ? '+' : '-'} {fmt(t.valor)}
+                    </div>
+                  </td>
+                  <td style={{ padding: '20px 32px', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                      <button
+                        onClick={() => setEditingTrans(t)}
+                        style={{ padding: '8px', background: 'rgba(59,130,246,0.1)', border: 'none', borderRadius: '10px', color: '#60a5fa', cursor: 'pointer' }}
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        style={{ padding: '8px', background: 'rgba(244,63,94,0.1)', border: 'none', borderRadius: '10px', color: '#f43f5e', cursor: 'pointer' }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

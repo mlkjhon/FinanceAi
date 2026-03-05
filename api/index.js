@@ -401,6 +401,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
     REGRAS CRÍTICAS:
     - Extraia o valor numérico mesmo se estiver por extenso (ex: "mil" = 1000).
+    - IMPORTANTE: Se o usuário disser "adicione na meta", "guardei na meta", "depositei no objetivo", MAPEE PARA A AÇÃO 3 (Movimentar Meta: tipo "meta", acao "adicionar"). NÃO registre como gasto.
     - Para gastos/ganhos, use preferencialmente uma das categorias disponíveis: ${catList}.
     - Responda EXCLUSIVAMENTE com o objeto JSON puro, sem textos adicionais.
 
@@ -735,7 +736,7 @@ function fallbackParser(text) {
 
   // Movimentar meta existente
   if (lower.includes('meta') || lower.includes('reserva') || lower.includes('objetivo')) {
-    const isAdicionar = /adiciona|coloca|guarda|deposita|põe|poe|guardei/.test(lower);
+    const isAdicionar = /adicion|coloca|guarda|deposita|põe|poe|guardei/.test(lower);
     const isRemover = /tira|remove|saca|resgata/.test(lower);
     const acao = isRemover ? 'remover' : 'adicionar';
     const val = parseMoney(text);

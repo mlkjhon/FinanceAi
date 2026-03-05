@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -25,7 +26,7 @@ const xlsx = require('xlsx');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: '/tmp/' });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Proteção Básica de Headers

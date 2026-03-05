@@ -5,7 +5,11 @@ import {
     Target, Wallet, Trophy, ArrowLeft, Plus
 } from 'lucide-react';
 
-const Profile = () => {
+interface ProfileProps {
+    onLogout?: () => void;
+}
+
+const Profile = ({ onLogout }: ProfileProps) => {
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
 
@@ -23,7 +27,11 @@ const Profile = () => {
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        navigate('/auth');
+        if (onLogout) {
+            onLogout();
+        } else {
+            navigate('/auth');
+        }
     };
 
     if (!user) return null;

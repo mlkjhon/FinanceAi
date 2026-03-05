@@ -21,8 +21,20 @@ const Investments = () => {
         { name: 'S&P 500 (Média Histórica)', value: '10.50', change: '+1.2%', trend: 'up' },
     ]);
     const [selectedRateName, setSelectedRateName] = useState<string | null>('Selic');
+    const [currentTip, setCurrentTip] = useState("");
+
+    const TIPS = [
+        "Taxas dinâmicas como o CDI mudam, mas a consistência dos seus aportes mensais é o que realmente constrói riqueza no longo prazo.",
+        "Diversifique seus investimentos para reduzir riscos. Não coloque todos os ovos na mesma cesta.",
+        "O tempo é o fator mais poderoso nos juros compostos. Começar cedo faz toda a diferença.",
+        "Mantenha uma reserva de emergência antes de buscar investimentos de maior risco.",
+        "Estude o mercado constantemente. O melhor investimento sempre será no seu conhecimento.",
+        "Lembre-se: rentabilidade passada não é garantia de rentabilidade futura."
+    ];
 
     useEffect(() => {
+        setCurrentTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
+
         // Fetch Real-time rates from Brasil API
         const fetchRates = async () => {
             try {
@@ -210,7 +222,7 @@ const Investments = () => {
                             <ShieldCheck size={20} />
                             <span style={{ fontWeight: 700, fontSize: '14px' }}>Dica do Mentor</span>
                         </div>
-                        <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 }}>"Taxas dinâmicas como o CDI mudam, mas a consistência dos seus aportes mensais é o que realmente constrói riqueza no longo prazo."</p>
+                        <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 }}>"{currentTip}"</p>
                     </div>
                 </div>
             </div>

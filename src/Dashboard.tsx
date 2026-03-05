@@ -362,24 +362,32 @@ const Dashboard = () => {
         <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 800 }}>Movimentações Recentes</h2>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <input
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', maxWidth: '400px' }}>
+              <button
+                onClick={() => setFilterText('')}
                 style={{
-                  padding: '8px 12px 8px 36px',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '12px',
-                  color: 'white',
-                  fontSize: '13px',
-                  outline: 'none',
-                  width: '200px',
-                  transition: 'all 0.2s'
+                  padding: '6px 14px', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                  background: filterText === '' ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
+                  color: filterText === '' ? '#60a5fa' : 'rgba(255,255,255,0.6)',
+                  border: filterText === '' ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(255,255,255,0.1)'
                 }}
-                placeholder="Filtrar lançamentos..."
-                value={filterText}
-                onChange={e => setFilterText(e.target.value)}
-              />
-              <Clock style={{ position: 'absolute', left: '12px', color: 'rgba(255,255,255,0.2)' }} size={16} />
+              >
+                Todos
+              </button>
+              {Array.from(new Set(transactions.map(t => t.categoria?.nome).filter(Boolean))).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setFilterText(cat)}
+                  style={{
+                    padding: '6px 14px', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap',
+                    background: filterText === cat ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
+                    color: filterText === cat ? '#60a5fa' : 'rgba(255,255,255,0.6)',
+                    border: filterText === cat ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
             <button
               onClick={() => setShowCatManager(true)}

@@ -184,16 +184,18 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
 
       {/* Main Content */}
       <main style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto' }}>
-        <Routes>
-          <Route path="/" element={<Chat avatarUrl={user.avatarUrl} userName={user.nome} />} />
-          <Route path="/investments" element={<Investments />} />
-          <Route path="/goals" element={<Goals />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/social" element={<Social />} />
-          {isAdmin && <Route path="/admin" element={<AdminDashboard />} />}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+        <div key={location.pathname} style={{ animation: 'slideFadeIn 0.3s ease-out' }}>
+          <Routes>
+            <Route path="/" element={<Chat avatarUrl={user.avatarUrl} userName={user.nome} />} />
+            <Route path="/investments" element={<Investments />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile onLogout={onLogout} />} />
+            <Route path="/social" element={<Social />} />
+            {isAdmin && <Route path="/admin" element={<AdminDashboard />} />}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </div>
       </main>
     </div>
   );
@@ -293,6 +295,7 @@ const App = () => {
           @keyframes spin { to { transform: rotate(360deg); } }
           @keyframes pulse { 0% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.8; transform: scale(1); } }
           @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes slideFadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
       </div>
     );

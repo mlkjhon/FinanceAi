@@ -56,6 +56,9 @@ const Investments = () => {
                         { name: 'Poupança', value: '6.17', change: 'Aproximação Média', trend: 'neutral' },
                         { name: 'S&P 500 (Média)', value: '10.50', change: '+1.2%', trend: 'up' },
                     ]);
+
+                    // Atualiza a calculadora para a Selic atual da API (Hoje ~15%)
+                    setRate(selic);
                 }
             } catch (err) {
                 console.error('Erro ao buscar taxas reais:', err);

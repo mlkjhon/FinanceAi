@@ -37,8 +37,6 @@ const Profile = ({ onLogout }: ProfileProps) => {
         }
     };
 
-    if (!user) return null;
-
     const cardStyle = {
         background: 'rgba(255, 255, 255, 0.03)',
         backdropFilter: 'blur(12px)',
@@ -120,15 +118,17 @@ const Profile = ({ onLogout }: ProfileProps) => {
     };
 
     const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
-    const [twofaCode, setTwofaCode] = useState('');
-    const [loading2FA, setLoading2FA] = useState(false);
-
     // Initial check from DB not fully supported in local user yet, so we fetch /me
     useEffect(() => {
         api.get('/me').then(res => {
             setUser((prev: any) => ({ ...prev, twofa_enabled: res.data.twofa_enabled }));
         }).catch(err => console.error(err));
     }, []);
+    const [twofaCode, setTwofaCode] = useState('');
+    const [loading2FA, setLoading2FA] = useState(false);
+
+    // Move up the early return here AFTER all hooks
+    if (!user) return null;
 
     const handleToggle2FA = async () => {
         try {

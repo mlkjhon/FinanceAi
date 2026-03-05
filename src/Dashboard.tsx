@@ -663,7 +663,9 @@ const Dashboard = () => {
                       <Calendar size={14} />
                       {(() => {
                         // Avoid UTC timezone offset shifting the date by parsing directly
-                        const [y, m, d] = (t.data || '').split('-');
+                        const dateStr = t.data ? t.data.split('T')[0] : '';
+                        if (!dateStr) return '';
+                        const [y, m, d] = dateStr.split('-');
                         return `${d}/${m}/${y}`;
                       })()}
                     </div>

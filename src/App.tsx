@@ -63,17 +63,16 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
   useEffect(() => {
     // Verificar lembrete 2FA
     if (user && !(user as any).twofa_enabled) {
-      const lastReminder = localStorage.getItem(`2fa_reminder_${user.id}`);
-      const now = Date.now();
-      // Mostrar se nunca mostrou ou se passou 24h
-      if (!lastReminder || now - parseInt(lastReminder) > 24 * 60 * 60 * 1000) {
+      const lastReminder = sessionStorage.getItem(`2fa_reminder_${user.id}`);
+      // Mostrar se nunca mostrou nesta mesma aba (session)
+      if (!lastReminder) {
         setShow2FAReminder(true);
       }
     }
   }, [user]);
 
   const handleClose2FAReminder = () => {
-    localStorage.setItem(`2fa_reminder_${user.id}`, Date.now().toString());
+    sessionStorage.setItem(`2fa_reminder_${user.id}`, 'true');
     setShow2FAReminder(false);
   };
 
@@ -206,7 +205,7 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
                           <div style={{ width: '8px', height: '8px', background: n.lida ? 'rgba(255,255,255,0.1)' : '#ef4444', borderRadius: '50%', marginTop: '6px', flexShrink: 0 }} />
                           <div style={{ flex: 1 }}>
                             <p style={{ margin: 0, fontSize: '13px', color: n.lida ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.9)', lineHeight: '1.5' }}>{n.mensagem}</p>
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '6px', display: 'block', fontWeight: 500 }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '6px', display: 'block', fontWeight: 500 }}>{n.createdat ? new Date(n.createdat).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                           </div>
                         </div>
                       </div>

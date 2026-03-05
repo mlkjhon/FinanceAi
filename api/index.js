@@ -590,8 +590,9 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     - Se o usuário pedir PLANO MENSAL, DICAS ou ANÁLISE DE GASTOS, USE A AÇÃO 5 (conversa) com:
       · Análise das transações recentes do usuário.
       · 3 a 5 ações práticas e específicas para o usuário executar.
+    - Se o usuário pedir para CRIAR UMA META MAS NÃO INFORMAR O NOME OU O VALOR ALVO, DEVOLVA A AÇÃO 5 (conversa) PERGUNTANDO: "Legal! Qual vai ser o nome da meta e qual o valor que você quer atingir?"
     - Se o usuário disser "adicione na meta" / "guardei na meta" / "depositei", MAPEIE PARA AÇÃO 3 (meta). NUNCA registre como gasto/ganho.
-    - Se o usuário disser "crie uma meta" / "nova meta" / "quero guardar para", MAPEIE PARA AÇÃO 2 (criar_meta).
+    - Se o usuário disser "crie uma meta" / "nova meta" / "quero guardar para", E INFORMAR NOME E VALOR, MAPEIE PARA AÇÃO 2 (criar_meta).
     - Se a mensagem for visivelmente um extrato bancário com várias linhas e datas, MAPEIE PARA AÇÃO 6.
     - Para gastos/ganhos, use preferencialmente uma das categorias disponíveis: ${catList}.
     - Responda EXCLUSIVAMENTE com o objeto JSON puro, sem textos adicionais, sem blocos markdown, sem crases.
@@ -616,7 +617,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       if (valorAlvo > 0) {
         const insert = await db.query(
           'INSERT INTO "Goal" (name, target, current, color, icon, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-          [nomeMeta, valorAlvo, 0, '#3b82f6', 'Target', req.user.id]
+          [nomeMeta, valorAlvo, 0, '#ef4444', 'Target', req.user.id]
         );
         const novaMeta = insert.rows[0];
         const botMsg = `🎯 Meta criada com sucesso! "${novaMeta.name}" — Alvo: R$ ${valorAlvo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Você pode acompanhar e depositar na aba Metas!`;
@@ -1117,7 +1118,15 @@ function fallbackParser(text) {
   // Ganho ou gasto
   const tipo = /ganhei|recebi|salario|salário|entrou|deposito|depósito|renda/.test(lower) ? 'ganho' : 'gasto';
   const valor = parseMoney(text);
-  if (valor === 0) return { tipo: 'conversa', resposta: 'Olá! 👋 Sou seu Mentor Financeiro. Posso registrar gastos, ganhos, criar metas ou dar dicas de investimento. Como posso ajudar?' };
+  if (valor === 0) {
+    if (lower.includes('dica') || lower.includes('investir') || lower.includes('plano') || lower.includes('analise') || lower.includes('análise')) {
+      return { tipo: 'conversa', resposta: 'Sou especialista em finanças. Com base no seu perfil, recomendo fazer aportes consistentes todo mês e construir uma reserva antes de buscar CDB ou ações. Posso detalhar mais se quiser!' };
+    }
+    if (lower.includes('ola') || lower.includes('olá') || lower.includes('oi') || lower.includes('bom dia') || lower.includes('boa tarde')) {
+      return { tipo: 'conversa', resposta: 'Olá! 👋 Sou seu Mentor Financeiro. Posso registrar gastos, ganhos, criar metas ou dar dicas de investimento. Como posso ajudar?' };
+    }
+    return { tipo: 'conversa', resposta: 'Para registrar, me diga o valor (ex: "Gastei 50 em ifood" ou "Ganhei 100 de freela"). Ou me pergunte alguma dúvida financeira!' };
+  }
 
   for (const item of KEYWORD_MAP) {
     if (item.keywords.some(kw => lower.includes(kw))) {

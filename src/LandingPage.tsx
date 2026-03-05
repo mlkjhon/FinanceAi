@@ -1,23 +1,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Canvas } from '@react-three/fiber';
+import PhilosopherHead3D from './components/PhilosopherHead3D';
 import {
     ShieldCheck,
     MessageSquare,
     LayoutDashboard,
-    TrendingUp,
     Zap,
     ChevronRight,
     ArrowRight,
     BrainCircuit,
     Star,
-    Sparkles,
     UserCircle2
 } from 'lucide-react';
 
 const card = {
-    background: 'rgba(255, 255, 255, 0.03)',
-    backdropFilter: 'blur(12px)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    background: 'rgba(255, 255, 255, 0.02)',
+    backdropFilter: 'blur(16px)',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
     borderRadius: '24px',
     padding: '32px',
 };
@@ -38,17 +38,17 @@ const FinanceCalculator = () => {
     });
 
     return (
-        <>
+        <div style={{ position: 'relative', zIndex: 10 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 <div>
                     <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: '14px', marginBottom: '16px', fontWeight: 600 }}>SUA RENDA MENSAL</label>
                     <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', fontSize: '24px', fontWeight: 800, color: '#3b82f6' }}>R$</span>
+                        <span style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', fontSize: '24px', fontWeight: 800, color: '#ef4444' }}>R$</span>
                         <input
                             type="number"
                             value={income}
                             onChange={(e) => setIncome(Number(e.target.value))}
-                            style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '24px 24px 24px 60px', color: 'white', fontSize: '32px', fontWeight: 900, outline: 'none' }}
+                            style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '24px 24px 24px 60px', color: 'white', fontSize: '32px', fontWeight: 900, outline: 'none' }}
                         />
                     </div>
                     <input
@@ -58,47 +58,47 @@ const FinanceCalculator = () => {
                         step="500"
                         value={income}
                         onChange={(e) => setIncome(Number(e.target.value))}
-                        style={{ width: '100%', marginTop: '24px', cursor: 'pointer', accentColor: '#3b82f6' }}
+                        style={{ width: '100%', marginTop: '24px', cursor: 'pointer', accentColor: '#ef4444' }}
                     />
                 </div>
 
                 <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px', lineHeight: 1.6 }}>
-                    A regra 50/30/20 é um método simples para gerenciar seu orçamento: 50% para necessidades básicas, 30% para desejos pessoais e 20% para poupança ou investimentos.
+                    A regra 50/30/20 é um método simples para gerenciar seu orçamento: 50% para necessidades, 30% desejos e 20% para o futuro.
                 </p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', justifyContent: 'center', marginTop: '40px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#10b981' }}>Necessidades (50%)</span>
+                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#f87171' }}>Necessidades (50%)</span>
                         <span style={{ fontSize: '20px', fontWeight: 800 }}>{fmt(needs)}</span>
                     </div>
                     <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-                        <div style={barStyle('#10b981', '50%')} />
+                        <div style={barStyle('#f87171', '50%')} />
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#f59e0b' }}>Desejos (30%)</span>
+                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#fca5a5' }}>Desejos (30%)</span>
                         <span style={{ fontSize: '20px', fontWeight: 800 }}>{fmt(wants)}</span>
                     </div>
                     <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-                        <div style={barStyle('#f59e0b', '30%')} />
+                        <div style={barStyle('#fca5a5', '30%')} />
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#3b82f6' }}>Investimentos (20%)</span>
+                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#ffffff' }}>Investimentos (20%)</span>
                         <span style={{ fontSize: '20px', fontWeight: 800 }}>{fmt(savings)}</span>
                     </div>
                     <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-                        <div style={barStyle('#3b82f6', '20%')} />
+                        <div style={barStyle('#ffffff', '20%')} />
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 
@@ -108,21 +108,23 @@ const LandingPage = () => {
     const navigate = useNavigate();
 
     const featureCardStyle = {
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        background: 'rgba(5, 5, 5, 0.4)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
         borderRadius: '24px',
-        padding: '32px',
+        padding: '40px',
         transition: 'all 0.3s ease',
         display: 'flex',
         flexDirection: 'column' as const,
-        gap: '16px'
+        gap: '20px'
     };
 
     const sectionStyle = {
-        padding: '80px 20px',
+        padding: '120px 20px',
         maxWidth: '1200px',
-        margin: '0 auto'
+        margin: '0 auto',
+        position: 'relative' as const,
+        zIndex: 10
     };
 
     return (
@@ -131,337 +133,200 @@ const LandingPage = () => {
             background: '#050505',
             color: 'white',
             fontFamily: "'Inter', sans-serif",
-            overflowX: 'hidden'
+            overflowX: 'hidden',
+            position: 'relative'
         }}>
-            {/* Background Ambient Glows */}
-            <div style={{ position: 'fixed', top: '-10%', right: '-5%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-            <div style={{ position: 'fixed', bottom: '-10%', left: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(153, 27, 27, 0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            {/* 3D Canvas Background fixed behind everything */}
+            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 0, pointerEvents: 'none' }}>
+                <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+                    <ambientLight intensity={0.5} />
+                    <directionalLight position={[10, 10, 5]} intensity={1} color="#ffffff" />
+                    <spotLight position={[-10, 10, 10]} intensity={2} color="#ef4444" />
+                    <spotLight position={[10, -10, -10]} intensity={1} color="#991b1b" />
+                    <PhilosopherHead3D />
+                </Canvas>
+            </div>
 
-            {/* Hero Section */}
-            <section style={{ ...sectionStyle, textAlign: 'center', paddingTop: '120px', minHeight: '80vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    padding: '8px 16px',
-                    borderRadius: '100px',
-                    border: '1px solid rgba(239, 68, 68, 0.2)',
-                    color: '#f87171',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    marginBottom: '24px',
-                    animation: 'fadeDown 0.8s ease-out'
-                }}>
-                    <Zap size={16} />
-                    <span>A Revolução da Gestão Financeira com IA</span>
-                </div>
+            {/* Foreground Content */}
+            <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'auto' }}>
 
-                <h1 style={{
-                    fontSize: '72px',
-                    fontWeight: 900,
-                    letterSpacing: '-0.04em',
-                    lineHeight: 1.1,
-                    marginBottom: '24px',
-                    background: 'linear-gradient(to bottom, #ffffff 30%, rgba(255,255,255,0.7) 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    maxWidth: '900px',
-                    animation: 'fadeUp 0.8s ease-out'
-                }}>
-                    Domine suas finanças conversando com nossa IA.
-                </h1>
+                {/* Hero Section */}
+                <section style={{ ...sectionStyle, paddingTop: '160px', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        padding: '8px 16px',
+                        borderRadius: '100px',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                        color: '#f87171',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        marginBottom: '32px',
+                        animation: 'fadeDown 0.8s ease-out'
+                    }}>
+                        <Zap size={16} />
+                        <span>Sabedoria Financeira com IA</span>
+                    </div>
 
-                <p style={{
-                    fontSize: '20px',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    maxWidth: '650px',
-                    lineHeight: 1.6,
-                    marginBottom: '48px',
-                    animation: 'fadeUp 1s ease-out'
-                }}>
-                    O FinanceAI transforma suas mensagens em dados organizados. Registre gastos, ganhe insights e alcance seus objetivos mais rápido.
-                </p>
+                    <h1 style={{
+                        fontSize: '84px',
+                        fontWeight: 900,
+                        letterSpacing: '-0.04em',
+                        lineHeight: 1.1,
+                        marginBottom: '32px',
+                        background: 'linear-gradient(to right, #ffffff, #fca5a5)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        maxWidth: '800px',
+                        animation: 'fadeUp 0.8s ease-out',
+                        textShadow: '0 10px 40px rgba(0,0,0,0.5)'
+                    }}>
+                        Domine suas finanças com mente clara.
+                    </h1>
 
-                <div style={{
-                    display: 'flex',
-                    gap: '16px',
-                    animation: 'fadeUp 1.2s ease-out'
-                }}>
+                    <p style={{
+                        fontSize: '22px',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        maxWidth: '550px',
+                        lineHeight: 1.6,
+                        marginBottom: '48px',
+                        animation: 'fadeUp 1s ease-out'
+                    }}>
+                        O FinanceAI combina a precisão dos dados com a inteligência do nosso "Filósofo Digital". Pare de apenas gastar, comece a analisar.
+                    </p>
+
+                    <div style={{
+                        display: 'flex',
+                        gap: '16px',
+                        animation: 'fadeUp 1.2s ease-out'
+                    }}>
+                        <button
+                            onClick={() => navigate('/auth')}
+                            style={{
+                                padding: '18px 40px',
+                                background: 'linear-gradient(135deg, #ef4444, #991b1b)',
+                                border: 'none',
+                                borderRadius: '20px',
+                                color: 'white',
+                                fontSize: '18px',
+                                fontWeight: 800,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                boxShadow: '0 15px 40px rgba(239, 68, 68, 0.4)',
+                                transition: 'all 0.2s',
+                                backdropFilter: 'blur(10px)'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                            Começar Agora <ChevronRight size={20} />
+                        </button>
+                    </div>
+                </section>
+
+                {/* Features Section */}
+                <section id="features" style={{ ...sectionStyle, padding: '160px 20px', background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.8) 20%)' }}>
+                    <div style={{ maxWidth: '600px', marginBottom: '80px' }}>
+                        <h2 style={{ fontSize: '56px', fontWeight: 900, marginBottom: '24px', lineHeight: 1.1 }}>A Razão acima do Impulso.</h2>
+                        <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '20px', lineHeight: 1.6 }}>Nossa IA não apenas lê planilhas, ela orienta e prevê como suas ações de hoje moldam o amanhã.</p>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px' }}>
+                        <div style={featureCardStyle}>
+                            <div style={{ width: '56px', height: '56px', background: 'rgba(239,68,68,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171' }}>
+                                <MessageSquare size={28} />
+                            </div>
+                            <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Mentor via Chat</h3>
+                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6, fontSize: '16px' }}>Esqueça formulários engessados. Converse como conversaria com um consultor. Ele entende, organiza e planeja.</p>
+                        </div>
+
+                        <div style={featureCardStyle}>
+                            <div style={{ width: '56px', height: '56px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
+                                <LayoutDashboard size={28} />
+                            </div>
+                            <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Visão Analítica</h3>
+                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6, fontSize: '16px' }}>Dashboards limpos, escuros e diretos ao ponto. Saiba onde seu dinheiro está sem ruídos visuais.</p>
+                        </div>
+
+                        <div style={featureCardStyle}>
+                            <div style={{ width: '56px', height: '56px', background: 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(153,27,27,0.1))', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
+                                <BrainCircuit size={28} />
+                            </div>
+                            <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Previsões Preditivas</h3>
+                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6, fontSize: '16px' }}>O Mentor identifica padrões nocivos de gastos e alerta quando você está fugindo do comportamento saudável.</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Finance Calculator Section */}
+                <section style={{ ...sectionStyle, padding: '160px 20px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ width: '100%', maxWidth: '500px' }}>
+                        <div style={{ marginBottom: '48px' }}>
+                            <h2 style={{ fontSize: '48px', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1 }}>Simulador<br /><span style={{ color: '#ef4444' }}>Estratégico</span></h2>
+                            <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '18px' }}>O primeiro passo da sabedoria é saber distribuir recursos.</p>
+                        </div>
+
+                        <div style={{
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            backdropFilter: 'blur(30px)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '32px',
+                            padding: '48px',
+                            boxShadow: '0 40px 100px rgba(0,0,0,0.5)'
+                        }}>
+                            <FinanceCalculator />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Final CTA Section */}
+                <section style={{ ...sectionStyle, textAlign: 'center', padding: '160px 20px', background: 'radial-gradient(circle at center, rgba(153,27,27,0.15) 0%, transparent 70%)' }}>
+                    <h2 style={{ fontSize: '64px', fontWeight: 900, marginBottom: '24px', letterSpacing: '-0.02em', textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>
+                        O poder de decidir<br />com confiança.
+                    </h2>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '22px', marginBottom: '48px', maxWidth: '600px', margin: '0 auto 48px auto' }}>Junte-se ao novo padrão de gestão financeira focado em inteligência e design premium.</p>
                     <button
                         onClick={() => navigate('/auth')}
                         style={{
-                            padding: '16px 32px',
-                            background: 'linear-gradient(135deg, #ef4444, #991b1b)',
+                            padding: '24px 64px',
+                            background: 'white',
                             border: 'none',
-                            borderRadius: '16px',
-                            color: 'white',
-                            fontSize: '18px',
-                            fontWeight: 700,
+                            borderRadius: '100px',
+                            color: '#050505',
+                            fontSize: '20px',
+                            fontWeight: 800,
                             cursor: 'pointer',
-                            display: 'flex',
+                            display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '8px',
-                            boxShadow: '0 10px 40px rgba(239, 68, 68, 0.3)',
-                            transition: 'transform 0.2s'
+                            gap: '12px',
+                            boxShadow: '0 20px 50px rgba(255,255,255,0.15)',
+                            transition: 'all 0.3s'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
                         onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                     >
-                        Começar Grátis <ChevronRight size={20} />
+                        Entrar no Sistema <ArrowRight size={24} />
                     </button>
+                </section>
 
-                    <button
-                        onClick={() => {
-                            const el = document.getElementById('features');
-                            el?.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        style={{
-                            padding: '16px 32px',
-                            background: 'rgba(255, 255, 255, 0.03)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            borderRadius: '16px',
-                            color: 'white',
-                            fontSize: '18px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'}
-                    >
-                        Ver Funcionalidades
-                    </button>
-                </div>
-
-                {/* Mockup Preview Area */}
-                <div style={{
-                    marginTop: '80px',
-                    width: '100%',
-                    maxWidth: '1100px',
-                    background: 'rgba(255,255,255,0.01)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '40px',
-                    padding: '16px',
-                    boxShadow: '0 40px 100px rgba(0,0,0,0.8)',
-                    animation: 'fadeUp 1.4s ease-out',
-                    position: 'relative'
-                }}>
-                    <div style={{
-                        background: '#050505',
-                        borderRadius: '28px',
-                        minHeight: '520px',
-                        width: '100%',
-                        display: 'grid',
-                        gridTemplateColumns: 'minmax(300px, 1fr) 320px',
-                        gap: '20px',
-                        padding: '24px',
-                        overflow: 'hidden',
-                        position: 'relative'
-                    }}>
-                        {/* Area Chart Section */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', gap: '16px' }}>
-                                <div style={{ ...card, flex: 1, padding: '20px', background: 'rgba(239,68,68,0.05)' }}>
-                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '4px' }}>SALDO TOTAL</p>
-                                    <p style={{ fontSize: '24px', fontWeight: 900 }}>R$ 12.450,00</p>
-                                </div>
-                                <div style={{ ...card, flex: 1, padding: '20px', background: 'rgba(255,255,255,0.05)' }}>
-                                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '4px' }}>ECONOMIA MÊS</p>
-                                    <p style={{ fontSize: '24px', fontWeight: 900, color: '#f87171' }}>+ 18%</p>
-                                </div>
-                            </div>
-
-                            <div style={{ ...card, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '24px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                                    <h4 style={{ fontSize: '16px', fontWeight: 800 }}>Análise de Fluxo</h4>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#991b1b' }} />
-                                    </div>
-                                </div>
-                                <div style={{ height: '200px', width: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
-                                    {/* Simulated smooth area chart with bars for simple rendering */}
-                                    {[30, 45, 35, 60, 55, 80, 70, 95, 85, 100, 90, 80].map((h, i) => (
-                                        <div key={i} style={{
-                                            flex: 1,
-                                            height: `${h}%`,
-                                            background: `linear-gradient(to top, rgba(239,68,68,${0.1 + (i * 0.05)}), rgba(153,27,27,${0.2 + (i * 0.05)}))`,
-                                            borderRadius: '4px 4px 0 0',
-                                            transition: 'height 1s ease'
-                                        }} />
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Mini AI Chat Section */}
-                        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
-                                <BrainCircuit size={20} color="#f87171" />
-                                <span style={{ fontSize: '14px', fontWeight: 800 }}>FinanceAI Assistant</span>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-                                <div style={{ alignSelf: 'flex-end', background: '#ef4444', padding: '10px 14px', borderRadius: '16px 16px 0 16px', fontSize: '13px' }}>
-                                    Gastei R$ 45 no almoço hoje
-                                </div>
-                                <div style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,0.05)', padding: '10px 14px', borderRadius: '16px 16px 16px 0', fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
-                                    Entendido! Registrei R$ 45,00 em <b>Alimentação</b>. Seu saldo restante para lazer este mês é R$ 850.
-                                </div>
-                            </div>
-
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '16px', color: 'rgba(255,255,255,0.2)', fontSize: '12px' }}>
-                                Digite um comando...
-                            </div>
-                        </div>
-
-                        {/* Abstract background blur in mockup */}
-                        <div style={{ position: 'absolute', top: '20%', left: '30%', width: '200px', height: '200px', background: 'rgba(239,68,68,0.1)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+                {/* Footer */}
+                <footer style={{ padding: '60px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '15px', background: '#000000' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
+                        <ShieldCheck size={24} color="#ef4444" />
+                        <span style={{ fontWeight: 800, color: 'white' }}>FinanceAI</span>
                     </div>
-                </div>
-            </section>
-
-            {/* Features Section */}
-            <section id="features" style={sectionStyle}>
-                <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-                    <h2 style={{ fontSize: '48px', fontWeight: 800, marginBottom: '16px' }}>Por que o FinanceAI?</h2>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '18px' }}>Tecnologia de ponta para sua liberdade financeira.</p>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-                    <div style={featureCardStyle}>
-                        <div style={{ width: '48px', height: '48px', background: 'rgba(239,68,68,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171' }}>
-                            <MessageSquare size={24} />
-                        </div>
-                        <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Chat com IA</h3>
-                        <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6 }}>Esqueça formulários chatos. Apenas digite "Gastei 50 no mercado" e nossa IA cuida do resto.</p>
-                    </div>
-
-                    <div style={featureCardStyle}>
-                        <div style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
-                            <LayoutDashboard size={24} />
-                        </div>
-                        <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Dashboard Premium</h3>
-                        <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6 }}>Visualize seus gastos por categoria em gráficos lindos e intuitivos.</p>
-                    </div>
-
-                    <div style={featureCardStyle}>
-                        <div style={{ width: '48px', height: '48px', background: 'rgba(153,27,27,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
-                            <ShieldCheck size={24} />
-                        </div>
-                        <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Segurança Total</h3>
-                        <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6 }}>Seus dados são protegidos com criptografia de ponta e autenticação JWT.</p>
-                    </div>
-                </div>
-            </section>
-
-            {/* Stats / Proof Section */}
-            <section style={{ ...sectionStyle, background: 'rgba(255,255,255,0.02)', borderRadius: '40px', padding: '60px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', textAlign: 'center' }}>
-                    <div>
-                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#ef4444' }}>100%</div>
-                        <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Privado e Seguro</div>
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#f87171' }}>24/7</div>
-                        <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Assistente Generativo</div>
-                    </div>
-                    <div>
-                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#ffffff' }}>+80k</div>
-                        <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Dados Processados</div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Finance Calculator Section */}
-            <section style={{ ...sectionStyle, padding: '100px 20px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-                    <h2 style={{ fontSize: '40px', fontWeight: 800, marginBottom: '16px' }}>Simulador de Planejamento 50/30/20</h2>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '18px' }}>Quanto você deveria estar guardando por mês?</p>
-                </div>
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                    gap: '40px',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                    borderRadius: '32px',
-                    padding: '40px'
-                }}>
-                    <FinanceCalculator />
-                </div>
-            </section>
-
-            {/* Reviews Section */}
-            <section style={{ ...sectionStyle, padding: '120px 20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                    <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                        <h2 style={{ fontSize: '48px', fontWeight: 800, marginBottom: '24px' }}>O que dizem nossos usuários</h2>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
-                            {[1, 2, 3, 4, 5].map(i => <Star key={i} size={24} fill="#f59e0b" color="#f59e0b" />)}
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-                        {[
-                            { name: "Carlos Silva", role: "Empresário", text: "O FinanceAI mudou a forma como vejo meu dinheiro. A IA realmente entende minhas necessidades." },
-                            { name: "Mariana Costa", role: "Designer Freelancer", text: "Finalmente um app que não parece uma planilha do Excel. Lindo e extremamente funcional." },
-                            { name: "Ricardo Oliveira", role: "Engenheiro", text: "As previsões de gastos são assustadoramente precisas. Me ajudou a economizar 20% no primeiro mês." }
-                        ].map((rev, idx) => (
-                            <div key={idx} style={{ ...card, padding: '40px' }}>
-                                <p style={{ fontSize: '18px', lineHeight: 1.6, marginBottom: '24px', fontStyle: 'italic', color: 'rgba(255,255,255,0.8)' }}>"{rev.text}"</p>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(45deg, #ef4444, #991b1b)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <UserCircle2 color="white" />
-                                    </div>
-                                    <div>
-                                        <p style={{ fontWeight: 800 }}>{rev.name}</p>
-                                        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>{rev.role}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-            <section style={{ ...sectionStyle, textAlign: 'center', padding: '120px 20px' }}>
-                <h2 style={{ fontSize: '48px', fontWeight: 800, marginBottom: '24px' }}>Pronto para mudar sua vida financeira?</h2>
-                <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '18px', marginBottom: '40px' }}>Junte-se a milhares de pessoas que já organizam suas finanças com IA.</p>
-                <button
-                    onClick={() => navigate('/auth')}
-                    style={{
-                        padding: '18px 48px',
-                        background: 'white',
-                        border: 'none',
-                        borderRadius: '16px',
-                        color: '#0a0e1a',
-                        fontSize: '18px',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        boxShadow: '0 20px 40px rgba(255,255,255,0.1)',
-                        transition: 'transform 0.2s'
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                >
-                    Criar minha conta grátis <ArrowRight size={20} />
-                </button>
-            </section>
-
-            {/* Footer */}
-            <footer style={{ padding: '40px 20px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '14px' }}>
-                © 2026 FinanceAI - Sua inteligência financeira. Todos os direitos reservados.
-            </footer>
+                    © 2026 Inteligência Financeira. Todos os direitos reservados.
+                </footer>
+            </div>
 
             <style>{`
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
+                @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+                @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+            `}</style>
         </div>
     );
 };

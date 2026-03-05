@@ -22,7 +22,20 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
             localStorage.setItem('token', data.token);
             onLogin(data.user);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Erro na autenticação. Verifique os dados.');
+            const errResponse = err.response?.data;
+            if (errResponse) {
+                if (typeof errResponse.error === 'string') {
+                    setError(errResponse.error);
+                } else if (typeof errResponse.error === 'object' && errResponse.error.message) {
+                    setError(errResponse.error.message);
+                } else if (typeof errResponse === 'string') {
+                    setError(errResponse);
+                } else {
+                    setError('Erro na autenticação. Verifique os dados ou tente novamente mais tarde.');
+                }
+            } else {
+                setError('Erro na autenticação. Servidor indisponível.');
+            }
         } finally {
             setLoading(false);
         }

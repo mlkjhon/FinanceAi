@@ -86,6 +86,19 @@ async function ensureCategory(nome, tipo, userId) {
 
 // ─── Auth Routes ─────────────────────────────────────────────────────────────
 
+// ROTA TEMPORÁRIA DE DIAGNÓSTICO - remover depois
+app.get('/api/debug', async (req, res) => {
+  const dbUrl = process.env.DATABASE_URL || 'NÃO DEFINIDA';
+  const maskedUrl = dbUrl.replace(/:([^@]+)@/, ':****@');
+  try {
+    await db.query('SELECT 1');
+    res.json({ status: 'ok', db: 'conectado', url: maskedUrl });
+  } catch (err) {
+    res.json({ status: 'erro', db: err.message, url: maskedUrl });
+  }
+});
+
+
 app.post('/api/auth/register', async (req, res) => {
   const { nome, email, password, adminCode } = req.body;
   if (!nome || !email || !password) return res.status(400).json({ error: 'Campos obrigatórios' });

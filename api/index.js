@@ -415,11 +415,11 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
         );
         const novaMeta = insert.rows[0];
         const botMsg = `🎯 Meta criada com sucesso! "${novaMeta.name}" — Alvo: R$ ${valorAlvo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Você pode acompanhar e depositar na aba Metas!`;
-        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       } else {
         const botMsg = `Para criar uma meta, informe o valor alvo! Ex: "cria uma meta de viagem de R$ 5.000"`;
-        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
     }
@@ -430,13 +430,13 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       const metas = goalsResult.rows;
       if (metas.length === 0) {
         const botMsg = `Você ainda não tem metas cadastradas. Quer criar uma agora? Diga algo como "cria uma meta de viagem de R$ 5.000"!`;
-        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
       const totalGuardado = metas.reduce((acc, m) => acc + m.current, 0);
       const listaStr = metas.map(m => `• ${m.name}: R$ ${m.current.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R$ ${m.target.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${Math.round((m.current / m.target) * 100)}%)`).join('\n');
       const botMsg = `📊 Suas metas:\n${listaStr}\n\n💰 Total guardado: R$ ${totalGuardado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+      await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
       return res.json({ success: true, message: botMsg });
     }
 
@@ -465,11 +465,11 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
         }
 
         const botMsg = `🎯 Feito! Movimentei R$ ${aiResponse.valor} na sua meta "${targetGoal.name}". Novo saldo: R$ ${newVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       } else {
         const botMsg = `Não encontrei a meta "${aiResponse.meta}". Suas metas atuais: ${metasNoBanco.map(m => m.name).join(', ') || 'nenhuma'}. Crie uma dizendo "cria uma meta de X"!`;
-        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
     }
@@ -485,7 +485,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       const trans = insert.rows[0];
       const emoji = aiResponse.tipo === 'gasto' ? '💸' : '💰';
       const botMsg = `${emoji} Registrei: ${trans.tipo} de R$ ${trans.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em ${aiResponse.categoria}${aiResponse.descricao ? ` — "${aiResponse.descricao}"` : ''}`;
-      await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+      await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
       return res.json({ success: true, data: trans, message: botMsg });
     }
 
@@ -497,7 +497,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       const ganhos = trans.filter(t => t.tipo === 'ganho').reduce((sum, t) => sum + t.valor, 0);
       const saldo = ganhos - gastos;
       const botMsg = `📊 **Seu Dashboard Atual:** \n\n🟢 Entradas: R$ ${ganhos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n🔴 Saídas: R$ ${gastos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n💰 Saldo Atual: R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\nVocê está indo bem! Quer alguma dica de investimento para esse saldo?`;
-      await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+      await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
       return res.json({ success: true, message: botMsg });
     }
 
@@ -543,7 +543,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     }
 
     const conversaMsg = aiResponse.resposta || 'Não entendi. Pode me dizer um gasto, ganho, pedir resumo do dashboard ou alguma dica financeira?';
-    await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [conversaMsg, 'bot', req.user.id]);
+    await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [conversaMsg, 'bot', req.user.id]);
     res.json({ success: true, message: conversaMsg });
 
   } catch (error) {

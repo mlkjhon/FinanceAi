@@ -153,86 +153,114 @@ const LandingPage = () => {
             <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'auto' }}>
 
                 {/* Hero Section */}
-                <section style={{ ...sectionStyle, paddingTop: '160px', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        padding: '8px 16px',
-                        borderRadius: '100px',
-                        border: '1px solid rgba(239, 68, 68, 0.2)',
-                        color: '#f87171',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        marginBottom: '32px',
-                        animation: 'fadeDown 0.8s ease-out'
-                    }}>
-                        <Zap size={16} />
-                        <span>Sabedoria Financeira com IA</span>
+                <section style={{
+                    ...sectionStyle,
+                    paddingTop: '120px',
+                    minHeight: '90vh',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '60px',
+                    flexWrap: 'wrap'
+                }}>
+                    <div style={{ flex: '1.2', minWidth: '320px' }}>
+                        <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            padding: '8px 16px',
+                            borderRadius: '100px',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            color: '#f87171',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            marginBottom: '32px',
+                            animation: 'fadeDown 0.8s ease-out'
+                        }}>
+                            <Zap size={16} />
+                            <span>Sabedoria Financeira com IA</span>
+                        </div>
+
+                        <h1 style={{
+                            fontSize: 'clamp(48px, 8vw, 84px)',
+                            fontWeight: 900,
+                            letterSpacing: '-0.04em',
+                            lineHeight: 1.1,
+                            marginBottom: '32px',
+                            background: 'linear-gradient(to right, #ffffff, #fca5a5)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            animation: 'fadeUp 0.8s ease-out',
+                            textShadow: '0 10px 40px rgba(0,0,0,0.5)'
+                        }}>
+                            Domine suas finanças com mente clara.
+                        </h1>
+
+                        <p style={{
+                            fontSize: '22px',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            lineHeight: 1.6,
+                            marginBottom: '48px',
+                            animation: 'fadeUp 1s ease-out'
+                        }}>
+                            O FinanceAI combina a precisão dos dados com a inteligência do nosso "Filósofo Digital". Pare de apenas gastar, comece a analisar.
+                        </p>
+
+                        <div style={{
+                            display: 'flex',
+                            gap: '16px',
+                            animation: 'fadeUp 1.2s ease-out'
+                        }}>
+                            <button
+                                onClick={() => navigate('/auth')}
+                                style={{
+                                    padding: '18px 40px',
+                                    background: 'linear-gradient(135deg, #ef4444, #991b1b)',
+                                    border: 'none',
+                                    borderRadius: '20px',
+                                    color: 'white',
+                                    fontSize: '18px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    boxShadow: '0 15px 40px rgba(239, 68, 68, 0.4)',
+                                    transition: 'all 0.2s',
+                                    backdropFilter: 'blur(10px)'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                                Começar Agora <ChevronRight size={20} />
+                            </button>
+                        </div>
                     </div>
 
-                    <h1 style={{
-                        fontSize: '84px',
-                        fontWeight: 900,
-                        letterSpacing: '-0.04em',
-                        lineHeight: 1.1,
-                        marginBottom: '32px',
-                        background: 'linear-gradient(to right, #ffffff, #fca5a5)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        maxWidth: '800px',
-                        animation: 'fadeUp 0.8s ease-out',
-                        textShadow: '0 10px 40px rgba(0,0,0,0.5)'
-                    }}>
-                        Domine suas finanças com mente clara.
-                    </h1>
-
-                    <p style={{
-                        fontSize: '22px',
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        maxWidth: '550px',
-                        lineHeight: 1.6,
-                        marginBottom: '48px',
-                        animation: 'fadeUp 1s ease-out'
-                    }}>
-                        O FinanceAI combina a precisão dos dados com a inteligência do nosso "Filósofo Digital". Pare de apenas gastar, comece a analisar.
-                    </p>
-
+                    {/* 3D Model Area - Positioned Next to Text */}
                     <div style={{
+                        flex: '1',
+                        height: '600px',
+                        minWidth: '320px',
+                        position: 'relative',
                         display: 'flex',
-                        gap: '16px',
-                        animation: 'fadeUp 1.2s ease-out'
+                        alignItems: 'center',
+                        justifyContent: 'center'
                     }}>
-                        <button
-                            onClick={() => navigate('/auth')}
-                            style={{
-                                padding: '18px 40px',
-                                background: 'linear-gradient(135deg, #ef4444, #991b1b)',
-                                border: 'none',
-                                borderRadius: '20px',
-                                color: 'white',
-                                fontSize: '18px',
-                                fontWeight: 800,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                boxShadow: '0 15px 40px rgba(239, 68, 68, 0.4)',
-                                transition: 'all 0.2s',
-                                backdropFilter: 'blur(10px)'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                        >
-                            Começar Agora <ChevronRight size={20} />
-                        </button>
-                    </div>
-                    <div style={{ flex: 1, position: 'relative' }}>
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '150%', height: '150%', zIndex: -1, pointerEvents: 'none' }}>
-                            <Canvas shadows camera={{ position: [0, 0, 8], fov: 45 }}>
+                        <div style={{
+                            position: 'absolute',
+                            width: '140%',
+                            height: '140%',
+                            zIndex: 0,
+                            pointerEvents: 'none'
+                        }}>
+                            <Canvas shadows camera={{ position: [0, 0, 8], fov: 40 }}>
                                 <Environment preset="city" />
-                                <SocratesModel />
+                                <React.Suspense fallback={null}>
+                                    <SocratesModel />
+                                </React.Suspense>
                             </Canvas>
                         </div>
                     </div>

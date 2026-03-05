@@ -201,7 +201,7 @@ const AdminDashboard = () => {
 
             {activeTab === 'categories' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <div style={{ ...cardStyle, display: 'flex', gap: '16px', alignItems: 'flex-end', background: 'rgba(59,130,246,0.05)' }}>
+                    <div className="glass" style={{ ...cardContentStyle, display: 'flex', gap: '16px', alignItems: 'flex-end', background: 'rgba(59,130,246,0.05)' }}>
                         <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginBottom: '8px', fontWeight: 600 }}>NOVA CATEGORIA GLOBAL</label>
                             <input
@@ -232,7 +232,7 @@ const AdminDashboard = () => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
                         {categories.map(c => (
-                            <div key={c.id} style={{ ...cardStyle, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div key={c.id} className="glass" style={{ ...cardContentStyle, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <Tag size={16} color={c.tipo === 'ganho' ? '#10b981' : '#f87171'} />
                                     <span style={{ fontWeight: 600 }}>{c.nome}</span>

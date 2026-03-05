@@ -157,8 +157,9 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ex: 'Recebi 5000 de salário' ou 'Gastei 150 em restaurante' ou 'Como investir?'"
+          className="glass"
           style={{
-            ...glassStyle, flex: 1, padding: '18px 24px', paddingRight: '60px',
+            flex: 1, padding: '18px 24px', paddingRight: '60px',
             color: 'white', fontSize: '15px', outline: 'none',
             boxShadow: '0 8px 30px rgba(0,0,0,0.2)', transition: 'all 0.2s'
           }}

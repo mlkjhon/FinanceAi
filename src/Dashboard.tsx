@@ -39,6 +39,8 @@ interface Transaction {
 const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 const COLORS = ['#ef4444', '#991b1b', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#a78bfa', '#fb923c', '#34d399', '#94a3b8'];
 
+const cardContentStyle = { padding: '32px' };
+
 // ─── Modal de Gestão de Categorias ──────────────────────────────────────────
 const CategoryManager = ({ categories, onClose, onRefresh }: {
   categories: Category[],
@@ -122,7 +124,7 @@ const EditModal = ({ transaction, categories, onClose, onSave }: {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+      <div className="glass" style={{ ...cardContentStyle, maxWidth: '500px', width: '100%', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Editar Transação</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>
@@ -212,7 +214,7 @@ const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: (
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+      <div className="glass" style={{ ...cardContentStyle, maxWidth: '500px', width: '100%', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Importar Extrato</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>
@@ -395,7 +397,7 @@ const Dashboard = () => {
           { label: 'Gastos Totais', value: fmt(totalGastos), icon: <TrendingDown size={24} />, color: '#f43f5e' },
           { label: 'Guardado em Metas', value: fmt(goals.reduce((sum, g) => sum + g.current, 0)), icon: <Target size={24} />, color: '#8b5cf6' },
         ].map((c, i) => (
-          <div key={i} style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div key={i} className="glass" style={{ ...cardContentStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>{c.label}</p>
               <p style={{ fontSize: '32px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>{c.value}</p>
@@ -407,7 +409,7 @@ const Dashboard = () => {
 
       {/* Smart Insights Panel */}
       {insights ? (
-        <div style={{ ...card, background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(0,0,0,0.8))', border: '1px solid rgba(239, 68, 68, 0.2)', position: 'relative', overflow: 'hidden' }}>
+        <div className="glass" style={{ ...cardContentStyle, background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(0,0,0,0.8))', border: '1px solid rgba(239, 68, 68, 0.2)', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(239, 68, 68, 0.1)', filter: 'blur(50px)', borderRadius: '50%' }} />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -450,14 +452,14 @@ const Dashboard = () => {
           </div>
         </div>
       ) : loadingInsights ? (
-        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: '12px', color: '#f87171' }}>
+        <div className="glass" style={{ ...cardContentStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: '12px', color: '#f87171' }}>
           <Loader2 className="animate-spin" /> Gerando insights personalizados...
         </div>
       ) : null}
 
       {/* Analytics Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
-        <div style={card}>
+        <div className="glass" style={cardContentStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <div style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '10px', color: '#ef4444' }}>
               <BarChart3 size={20} />
@@ -479,7 +481,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div style={card}>
+        <div className="glass" style={cardContentStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <div style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: '#ffffff' }}>
               <PieChart size={20} />
@@ -500,7 +502,7 @@ const Dashboard = () => {
       </div>
 
       {/* Transactions Table */}
-      <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+      <div className="glass" style={{ ...cardContentStyle, padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 800 }}>Movimentações Recentes</h2>

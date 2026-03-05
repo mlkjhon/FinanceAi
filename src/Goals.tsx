@@ -119,7 +119,7 @@ const Goals = () => {
             </div>
 
             {showNewGoal && (
-                <div style={{ ...cardStyle, border: '1px solid #3b82f6' }}>
+                <div className="glass" style={{ ...cardContentStyle, border: '1px solid #3b82f6' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>Criar Nova Meta</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 2fr) minmax(150px, 1fr) auto', gap: '16px', alignItems: 'flex-end' }}>
                         <div>

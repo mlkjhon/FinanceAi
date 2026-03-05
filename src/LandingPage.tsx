@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { Environment } from '@react-three/drei';
-import SocratesModel from './components/SocratesModel';
+import Hero3DElement from './components/Hero3DElement';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
     ShieldCheck,
@@ -141,12 +141,23 @@ const LandingPage = () => {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#020202',
+            background: '#040404', // Slightly lighter/noisier black for depth
+            backgroundImage: 'radial-gradient(circle at top right, rgba(239, 68, 68, 0.03) 0%, transparent 40%), radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.02) 0%, transparent 40%)',
             color: 'white',
             fontFamily: "'Inter', sans-serif",
             overflowX: 'hidden',
             position: 'relative'
         }}>
+
+            {/* Background Interactive 3D Art - Fixed to follow scroll */}
+            <div style={{ position: 'fixed', top: '10%', right: '-10%', width: '60%', height: '80vh', zIndex: 0, pointerEvents: 'none', opacity: 0.8 }}>
+                <Canvas shadows camera={{ position: [0, 0, 8], fov: 45 }}>
+                    <Environment preset="city" />
+                    <React.Suspense fallback={null}>
+                        <Hero3DElement />
+                    </React.Suspense>
+                </Canvas>
+            </div>
 
 
             {/* Foreground Content */}
@@ -238,36 +249,17 @@ const LandingPage = () => {
                             </button>
                         </div>
                     </div>
-
-                    {/* 3D Model Area - Positioned Next to Text */}
-                    <div style={{
-                        flex: '1',
-                        height: '600px',
-                        minWidth: '320px',
-                        position: 'relative',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <div style={{
-                            position: 'absolute',
-                            width: '140%',
-                            height: '140%',
-                            zIndex: 0,
-                            pointerEvents: 'none'
-                        }}>
-                            <Canvas shadows camera={{ position: [0, 0, 8], fov: 40 }}>
-                                <Environment preset="city" />
-                                <React.Suspense fallback={null}>
-                                    <SocratesModel />
-                                </React.Suspense>
-                            </Canvas>
-                        </div>
-                    </div>
                 </section>
 
                 {/* Features Section */}
-                <section id="features" style={{ ...sectionStyle, padding: '160px 20px', background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.8) 20%)' }}>
+                <motion.section
+                    initial={{ opacity: 0, y: 80 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    id="features"
+                    style={{ ...sectionStyle, padding: '160px 20px', background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.8) 20%)' }}
+                >
                     <div style={{ maxWidth: '600px', marginBottom: '80px' }}>
                         <h2 style={{ fontSize: '56px', fontWeight: 900, marginBottom: '24px', lineHeight: 1.1 }}>A Razão acima do Impulso.</h2>
                         <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '20px', lineHeight: 1.6 }}>Nossa IA não apenas lê planilhas, ela orienta e prevê como suas ações de hoje moldam o amanhã.</p>
@@ -298,10 +290,16 @@ const LandingPage = () => {
                             <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6, fontSize: '16px' }}>O Mentor identifica padrões nocivos de gastos e alerta quando você está fugindo do comportamento saudável.</p>
                         </div>
                     </div>
-                </section>
+                </motion.section>
 
                 {/* Finance Calculator Section */}
-                <section style={{ ...sectionStyle, padding: '160px 20px', display: 'flex', justifyContent: 'flex-end' }}>
+                <motion.section
+                    initial={{ opacity: 0, y: 80 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    style={{ ...sectionStyle, padding: '160px 20px', display: 'flex', justifyContent: 'flex-end' }}
+                >
                     <div style={{ width: '100%', maxWidth: '500px' }}>
                         <div style={{ marginBottom: '48px' }}>
                             <h2 style={{ fontSize: '48px', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1 }}>Simulador<br /><span style={{ color: '#ef4444' }}>Estratégico</span></h2>
@@ -319,10 +317,16 @@ const LandingPage = () => {
                             <FinanceCalculator />
                         </div>
                     </div>
-                </section>
+                </motion.section>
 
                 {/* Final CTA Section */}
-                <section style={{ ...sectionStyle, textAlign: 'center', padding: '160px 20px', background: 'radial-gradient(circle at center, rgba(153,27,27,0.15) 0%, transparent 70%)' }}>
+                <motion.section
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    style={{ ...sectionStyle, textAlign: 'center', padding: '160px 20px', background: 'radial-gradient(circle at center, rgba(153,27,27,0.15) 0%, transparent 70%)' }}
+                >
                     <h2 style={{ fontSize: '64px', fontWeight: 900, marginBottom: '24px', letterSpacing: '-0.02em', textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>
                         O poder de decidir<br />com confiança.
                     </h2>
@@ -349,7 +353,7 @@ const LandingPage = () => {
                     >
                         Entrar no Sistema <ArrowRight size={24} />
                     </button>
-                </section>
+                </motion.section>
 
                 {/* Footer */}
                 <footer style={{ padding: '60px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '15px', background: '#000000' }}>

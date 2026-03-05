@@ -119,6 +119,54 @@ const Profile = ({ onLogout }: ProfileProps) => {
         reader.readAsDataURL(file);
     };
 
+    const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
+    const [twofaCode, setTwofaCode] = useState('');
+    const [loading2FA, setLoading2FA] = useState(false);
+
+    // Initial check from DB not fully supported in local user yet, so we fetch /me
+    useEffect(() => {
+        api.get('/me').then(res => {
+            setUser((prev: any) => ({ ...prev, twofa_enabled: res.data.twofa_enabled }));
+        }).catch(err => console.error(err));
+    }, []);
+
+    const handleToggle2FA = async () => {
+        try {
+            if (user.twofa_enabled) {
+                if (window.confirm("Deseja realmente desativar seu 2FA? Sua conta ficará menos segura.")) {
+                    await api.post('/auth/enable-2fa', { action: 'disable' });
+                    setUser({ ...user, twofa_enabled: false });
+                    showToast('2FA desativado com sucesso.', 'success');
+                }
+            } else {
+                setLoading2FA(true);
+                await api.post('/auth/enable-2fa', { action: 'request' });
+                setIs2FAModalOpen(true);
+                showToast('Código enviado para seu e-mail.', 'success');
+            }
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'Erro ao configurar 2FA', 'error');
+        } finally {
+            setLoading2FA(false);
+        }
+    };
+
+    const handleVerify2FA = async () => {
+        if (!twofaCode || twofaCode.length < 6) return showToast('Código inválido', 'error');
+        setLoading2FA(true);
+        try {
+            await api.post('/auth/enable-2fa', { action: 'verify', code: twofaCode });
+            setUser({ ...user, twofa_enabled: true });
+            setIs2FAModalOpen(false);
+            setTwofaCode('');
+            showToast('Autorização em Duas Etapas ATIVADA!', 'success');
+        } catch (err: any) {
+            showToast(err.response?.data?.error || 'Erro ao verificar código', 'error');
+        } finally {
+            setLoading2FA(false);
+        }
+    };
+
     return (
         <div style={{ minHeight: '100vh', background: '#020617', color: 'white', padding: '40px 20px' }}>
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -171,31 +219,59 @@ const Profile = ({ onLogout }: ProfileProps) => {
                         </div>
                     </div>
 
-                    {/* Financial Onboarding Data */}
-                    <div style={cardStyle}>
-                        <h3 style={sectionTitle}><Target size={14} /> PERFIL FINANCEIRO</h3>
-                        {user.onboardingData ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Objetivo:</span>
-                                    <span style={{ fontWeight: 700, color: '#3b82f6' }}>{user.onboardingData.objective}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                        {/* Financial Onboarding Data */}
+                        <div style={cardStyle}>
+                            <h3 style={sectionTitle}><Target size={14} /> PERFIL FINANCEIRO</h3>
+                            {user.onboardingData ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Objetivo:</span>
+                                        <span style={{ fontWeight: 700, color: '#3b82f6' }}>{user.onboardingData.objective}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Renda Mensal:</span>
+                                        <span style={{ fontWeight: 700 }}>R$ {user.onboardingData.income}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Estilo:</span>
+                                        <span style={{ fontWeight: 700 }}>{user.onboardingData.profile}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Meta:</span>
+                                        <span style={{ fontWeight: 700 }}>{user.onboardingData.dream}</span>
+                                    </div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Renda Mensal:</span>
-                                    <span style={{ fontWeight: 700 }}>R$ {user.onboardingData.income}</span>
+                            ) : (
+                                <p style={{ color: 'rgba(255, 255, 255, 0.2)' }}>Nenhum dado de onboarding disponível.</p>
+                            )}
+                        </div>
+
+                        {/* Security 2FA */}
+                        <div style={{ ...cardStyle, border: user.twofa_enabled ? '1px solid rgba(16, 185, 129, 0.3)' : cardStyle.border }}>
+                            <h3 style={{ ...sectionTitle, color: user.twofa_enabled ? '#10b981' : sectionTitle.color }}><Shield size={14} /> SEGURANÇA E LOGIN</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <div>
+                                    <p style={{ fontWeight: 700, fontSize: '15px' }}>Verificação em 2 Fatores</p>
+                                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Enviaremos um código por e-mail no login</p>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Estilo:</span>
-                                    <span style={{ fontWeight: 700 }}>{user.onboardingData.profile}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.4)' }}>Meta:</span>
-                                    <span style={{ fontWeight: 700 }}>{user.onboardingData.dream}</span>
-                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <div style={{
+                                        width: '44px', height: '24px', borderRadius: '12px',
+                                        background: user.twofa_enabled ? '#10b981' : 'rgba(255,255,255,0.1)',
+                                        position: 'relative', transition: 'all 0.3s'
+                                    }}>
+                                        <div style={{
+                                            width: '20px', height: '20px', borderRadius: '50%',
+                                            background: 'white', position: 'absolute', top: '2px',
+                                            left: user.twofa_enabled ? '22px' : '2px', transition: 'all 0.3s',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                        }} />
+                                    </div>
+                                    <input type="checkbox" checked={!!user.twofa_enabled} onChange={handleToggle2FA} disabled={loading2FA} style={{ display: 'none' }} />
+                                </label>
                             </div>
-                        ) : (
-                            <p style={{ color: 'rgba(255, 255, 255, 0.2)' }}>Nenhum dado de onboarding disponível.</p>
-                        )}
+                        </div>
                     </div>
                 </div>
 
@@ -232,6 +308,59 @@ const Profile = ({ onLogout }: ProfileProps) => {
                     </div>
                 )}
             </div>
+
+            {/* 2FA Verification Modal */}
+            {is2FAModalOpen && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(5px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                }}>
+                    <div style={{
+                        background: '#0f172a', padding: '40px', borderRadius: '24px', width: '90%', maxWidth: '400px',
+                        border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+                    }}>
+                        <div style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                            <Shield color="white" size={32} />
+                        </div>
+                        <h2 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Ativar 2FA</h2>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', marginBottom: '32px' }}>
+                            Nós enviamos um código de 6 dígitos para o seu e-mail ({user.email}). Insira-o abaixo para confirmar a ativação.
+                        </p>
+
+                        <input
+                            type="text"
+                            maxLength={6}
+                            placeholder="000000"
+                            value={twofaCode}
+                            onChange={(e) => setTwofaCode(e.target.value.replace(/\D/g, ''))}
+                            style={{
+                                width: '100%', padding: '16px', background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px',
+                                color: 'white', fontSize: '24px', textAlign: 'center', fontWeight: 700,
+                                letterSpacing: '4px', outline: 'none', marginBottom: '24px'
+                            }}
+                        />
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setIs2FAModalOpen(false)}
+                                disabled={loading2FA}
+                                style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleVerify2FA}
+                                disabled={loading2FA || twofaCode.length < 6}
+                                style={{ flex: 1, padding: '14px', background: '#10b981', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                                {loading2FA ? 'Verificando...' : 'Confirmar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

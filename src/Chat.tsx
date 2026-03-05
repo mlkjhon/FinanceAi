@@ -182,59 +182,60 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
         )}
       </div>
 
-      {/* Quick Actions */}
-      {showChips && (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      {/* Input */}
+      <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '12px', position: 'relative' }}>
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Ex: 'Gastei 200 em farmácia' · 'Dicas de investimento'"
+            className="glass"
+            style={{
+              flex: 1, padding: '18px 24px', paddingRight: '60px',
+              color: 'white', fontSize: '15px', outline: 'none',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.2)', transition: 'all 0.2s',
+              borderRadius: '24px'
+            }}
+            onFocus={e => e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)'}
+            onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
+          />
+          <button type="submit" disabled={!input.trim() || isTyping}
+            style={{
+              position: 'absolute', right: '10px', top: '10px', bottom: '10px',
+              aspectRatio: '1', background: 'linear-gradient(135deg, #ef4444, #991b1b)',
+              border: 'none', borderRadius: '16px', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'all 0.2s',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <Send size={20} />
+          </button>
+        </div>
+
+        {/* Quick Actions (Always visible below input) */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '4px' }}>
           {SUGGESTIONS.map(({ icon: Icon, label, text }) => (
-            <button key={label} onClick={() => handleSend(text)}
+            <button key={label} type="button" onClick={() => handleSend(text)} disabled={isTyping}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 padding: '8px 14px',
-                background: 'rgba(239,68,68,0.08)',
-                border: '1px solid rgba(239,68,68,0.2)',
-                borderRadius: '100px', color: '#f87171',
-                fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '100px', color: 'rgba(255,255,255,0.6)',
+                fontSize: '12px', fontWeight: 600, cursor: isTyping ? 'default' : 'pointer', transition: 'all 0.2s',
               }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+              onMouseEnter={e => { if (!isTyping) { e.currentTarget.style.color = 'white'; e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'; } }}
+              onMouseLeave={e => { if (!isTyping) { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; } }}
             >
               <Icon size={14} />
               {label}
             </button>
           ))}
         </div>
-      )}
-
-      {/* Input */}
-      <form onSubmit={handleFormSubmit} style={{ display: 'flex', gap: '12px', position: 'relative' }}>
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Ex: 'Gastei 200 em farmácia' · 'Dicas de investimento' · 'Criar meta R$5000'"
-          className="glass"
-          style={{
-            flex: 1, padding: '18px 24px', paddingRight: '60px',
-            color: 'white', fontSize: '15px', outline: 'none',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.2)', transition: 'all 0.2s'
-          }}
-          onFocus={e => e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)'}
-          onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
-        />
-        <button type="submit" disabled={!input.trim() || isTyping}
-          style={{
-            position: 'absolute', right: '10px', top: '10px', bottom: '10px',
-            aspectRatio: '1', background: 'linear-gradient(135deg, #ef4444, #991b1b)',
-            border: 'none', borderRadius: '16px', color: 'white',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', transition: 'all 0.2s',
-            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
-          }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <Send size={20} />
-        </button>
       </form>
 
       <style>{`

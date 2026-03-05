@@ -129,22 +129,29 @@ app.get('/api/debug', async (req, res) => {
 });
 
 
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com', // you can use any SMTP server
+  port: 587,
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: process.env.EMAIL_USER || 'financeai.noreply@gmail.com',
+    pass: process.env.EMAIL_PASS || 'dummy_password' // User will need to configure this in .env
+  }
+});
+
 app.post('/api/auth/register', async (req, res) => {
   const { nome, email, password, adminCode } = req.body;
   if (!nome || !email || !password) return res.status(400).json({ error: 'Campos obrigatórios' });
 
-  // Validação de complexidade
   if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
     return res.status(400).json({ error: 'A senha deve ter no mínimo 8 caracteres contendo letras e números.' });
   }
 
   try {
-    console.log('[Register Attempt]:', { email, nome });
     const existingResult = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
-    if (existingResult.rows.length > 0) {
-      console.log('[Register Fail]: E-mail já cadastrado');
-      return res.status(400).json({ error: 'E-mail já cadastrado' });
-    }
+    if (existingResult.rows.length > 0) return res.status(400).json({ error: 'E-mail já cadastrado' });
 
     const hashedPassword = await hashPassword(password);
     const role = (adminCode === 'ADMIN123') ? 'ADMIN' : 'USER';
@@ -154,36 +161,56 @@ app.post('/api/auth/register', async (req, res) => {
       [nome, email, hashedPassword, role]
     );
     const user = insertResult.rows[0];
-    console.log('[Register Success]:', user.id);
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
     res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone } });
   } catch (err) {
-    console.error('[Register Error FULL]:', err);
-    res.status(500).json({ error: 'Erro ao registrar usuário', details: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Erro ao registrar usuário' });
   }
 });
 
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
-    console.log('[Login Attempt]:', email);
     const result = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
     const user = result.rows[0];
-    if (!user) {
-      console.log('[Login Fail]: Usuário não encontrado');
-      return res.status(401).json({ error: 'E-mail ou senha inválidos' });
-    }
+    if (!user) return res.status(401).json({ error: 'E-mail ou senha inválidos' });
 
     const passMatch = await comparePassword(password, user.password);
-    if (!passMatch) {
-      console.log('[Login Fail]: Senha incorreta');
-      return res.status(401).json({ error: 'E-mail ou senha inválidos' });
+    if (!passMatch) return res.status(401).json({ error: 'E-mail ou senha inválidos' });
+
+    // Handle 2FA
+    if (user.twofa_enabled) {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = new Date(Date.now() + 10 * 60000); // 10 minutes
+
+      await db.query(
+        'UPDATE "User" SET twofa_code = $1, twofa_expires = $2 WHERE id = $3',
+        [code, expires, user.id]
+      );
+
+      try {
+        await transporter.sendMail({
+          from: '"FinanceAI Segurança" <financeai.noreply@gmail.com>',
+          to: user.email,
+          subject: 'Seu código de acesso FinanceAI',
+          html: `<div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                   <h2 style="color: #ef4444;">FinanceAI Security</h2>
+                   <p>Olá ${user.nome}, seu código de acesso é:</p>
+                   <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; padding: 20px; text-align: center; background: #f9fafb; border-radius: 8px;">
+                     ${code}
+                   </div>
+                   <p style="color: #666; font-size: 12px; margin-top: 20px;">Este código expira em 10 minutos.</p>
+                 </div>`
+        });
+      } catch (e) {
+        console.error('Failed to send email:', e);
+      }
+
+      return res.json({ requires2FA: true, userId: user.id, email: user.email });
     }
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
-
-    // Safely parse onboardingdata if it's a string, otherwise use as is
     let onboardingData = user.onboardingdata;
     if (typeof onboardingData === 'string') {
       try { onboardingData = JSON.parse(onboardingData); } catch (e) { onboardingData = null; }
@@ -191,19 +218,83 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
     res.json({
       token,
-      user: {
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        role: user.role,
-        onboardingDone: user.onboardingdone,
-        onboardingData,
-        avatarUrl: user.avatarurl
-      }
+      user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone, onboardingData, avatarUrl: user.avatarurl }
     });
   } catch (err) {
-    console.error('[Login Error]:', err);
-    res.status(500).json({ error: 'Erro ao fazer login', details: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Erro ao fazer login' });
+  }
+});
+
+app.post('/api/auth/verify-2fa', loginLimiter, async (req, res) => {
+  const { userId, code } = req.body;
+  if (!userId || !code) return res.status(400).json({ error: 'Campos inválidos' });
+
+  try {
+    const result = await db.query('SELECT * FROM "User" WHERE id = $1', [userId]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    if (user.twofa_code !== code) return res.status(401).json({ error: 'Código incorreto' });
+    if (new Date() > new Date(user.twofa_expires)) return res.status(401).json({ error: 'Código expirado' });
+
+    // Clear code and login user
+    await db.query('UPDATE "User" SET twofa_code = NULL, twofa_expires = NULL WHERE id = $1', [user.id]);
+
+    const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
+    let onboardingData = user.onboardingdata;
+    if (typeof onboardingData === 'string') {
+      try { onboardingData = JSON.parse(onboardingData); } catch (e) { onboardingData = null; }
+    }
+
+    res.json({
+      token,
+      user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone, onboardingData, avatarUrl: user.avatarurl }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao verificar código' });
+  }
+});
+
+app.post('/api/auth/enable-2fa', authMiddleware, async (req, res) => {
+  const { action, code } = req.body; // action: 'request', 'verify', 'disable'
+
+  try {
+    if (action === 'disable') {
+      await db.query('UPDATE "User" SET twofa_enabled = FALSE WHERE id = $1', [req.user.id]);
+      return res.json({ success: true, message: '2FA desativado' });
+    }
+
+    if (action === 'request') {
+      const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = new Date(Date.now() + 10 * 60000);
+      await db.query('UPDATE "User" SET twofa_code = $1, twofa_expires = $2 WHERE id = $3', [generatedCode, expires, req.user.id]);
+
+      try {
+        await transporter.sendMail({
+          from: '"FinanceAI Segurança" <financeai.noreply@gmail.com>',
+          to: req.user.email,
+          subject: 'Ativação do 2FA - FinanceAI',
+          html: `<h1>Ativação de 2 Fatores</h1><p>Seu código é: <b>${generatedCode}</b></p>`
+        });
+      } catch (e) {
+        return res.status(500).json({ error: 'Falha ao enviar e-mail. Verifique o servidor SMTP.' });
+      }
+
+      return res.json({ success: true, message: 'Código enviado por e-mail' });
+    }
+
+    if (action === 'verify') {
+      const result = await db.query('SELECT twofa_code, twofa_expires FROM "User" WHERE id = $1', [req.user.id]);
+      const user = result.rows[0];
+
+      if (user.twofa_code !== code) return res.status(401).json({ error: 'Código incorreto' });
+      if (new Date() > new Date(user.twofa_expires)) return res.status(401).json({ error: 'Código expirado' });
+
+      await db.query('UPDATE "User" SET twofa_enabled = TRUE, twofa_code = NULL, twofa_expires = NULL WHERE id = $1', [req.user.id]);
+      return res.json({ success: true, message: '2FA ativado com sucesso!' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Erro na configuração do 2FA' });
   }
 });
 

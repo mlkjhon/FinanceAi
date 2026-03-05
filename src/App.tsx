@@ -23,12 +23,59 @@ interface User {
   avatarUrl?: string;
 }
 
+// ─── Componente Lembrete 2FA ──────────────────────────────────────────────────
+const TwoFaReminder = ({ userName, onClose }: { userName: string, onClose: () => void }) => {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.3s ease-out' }}>
+      <div className="glass" style={{ maxWidth: '450px', width: '100%', padding: '32px', textAlign: 'center', border: '1px solid rgba(245, 158, 11, 0.4)', position: 'relative' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+          ✕
+        </button>
+        <div style={{ width: '64px', height: '64px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <ShieldCheck color="#f59e0b" size={32} />
+        </div>
+        <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Ative o 2FA, {userName.split(' ')[0]}!</h3>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
+          Notamos que você ainda não ativou a <strong>Autenticação de 2 Fatores (2FA)</strong>.
+          Para a segurança dos seus dados financeiros, recomendamos fortemente ativar esta proteção.
+        </p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+            Lembrar depois
+          </button>
+          <Link to="/profile" onClick={onClose} style={{ flex: 1, padding: '14px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', textDecoration: 'none', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(245, 158, 11, 0.2)' }}>
+            Ativar Agora
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Layout Principal ────────────────────────────────────────────────────────
 const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
   const location = useLocation();
   const isAdmin = user.role === 'ADMIN';
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [show2FAReminder, setShow2FAReminder] = useState(false);
+
+  useEffect(() => {
+    // Verificar lembrete 2FA
+    if (user && !(user as any).twofa_enabled) {
+      const lastReminder = localStorage.getItem(`2fa_reminder_${user.id}`);
+      const now = Date.now();
+      // Mostrar se nunca mostrou ou se passou 24h
+      if (!lastReminder || now - parseInt(lastReminder) > 24 * 60 * 60 * 1000) {
+        setShow2FAReminder(true);
+      }
+    }
+  }, [user]);
+
+  const handleClose2FAReminder = () => {
+    localStorage.setItem(`2fa_reminder_${user.id}`, Date.now().toString());
+    setShow2FAReminder(false);
+  };
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -78,6 +125,8 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
       minHeight: '100vh', background: 'radial-gradient(circle at top right, #0a0a0a, #000000)',
       color: 'white', fontFamily: "'Inter', sans-serif"
     }}>
+      {show2FAReminder && <TwoFaReminder userName={user.nome} onClose={handleClose2FAReminder} />}
+
       {/* Background Glows */}
       <div style={{ position: 'fixed', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(239, 68, 68, 0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'fixed', bottom: '-10%', left: '-5%', width: '30%', height: '30%', background: 'radial-gradient(circle, rgba(153, 27, 27, 0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />

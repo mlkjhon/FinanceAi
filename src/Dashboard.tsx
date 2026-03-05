@@ -244,6 +244,41 @@ const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: (
   );
 };
 
+// ─── Modal de Confirmação de Exclusão ───────────────────────────────────────
+const DeleteModal = ({ onClose, onConfirm }: { onClose: () => void, onConfirm: () => void }) => {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div className="glass" style={{ ...cardContentStyle, maxWidth: '400px', width: '100%', border: '1px solid rgba(239, 68, 68, 0.4)', textAlign: 'center' }}>
+        <div style={{ width: '64px', height: '64px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <Trash2 color="#ef4444" size={32} />
+        </div>
+        <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Excluir Transação?</h3>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '32px' }}>
+          Esta ação não pode ser desfeita. Tem certeza que deseja remover este registro do seu histórico?
+        </p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ flex: 1, padding: '14px', background: '#ef4444', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)' }}
+            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            Sim, Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Dashboard Principal ──────────────────────────────────────────────────────
 const Dashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -251,6 +286,7 @@ const Dashboard = () => {
   const [goals, setGoals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTrans, setEditingTrans] = useState<Transaction | null>(null);
+  const [transToDelete, setTransToDelete] = useState<number | null>(null);
   const [showCatManager, setShowCatManager] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
   const [insights, setInsights] = useState<any>(null);
@@ -287,12 +323,14 @@ const Dashboard = () => {
   useEffect(() => { fetchData(); fetchInsights(); }, []);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Excluir esta transação permanentemente?')) return;
     try {
       await api.delete(`/transactions/${id}`);
       fetchData();
-      showToast('Transação excluída.', 'success');
-    } catch (err: any) { showToast(err.response?.data?.error || 'Erro ao excluir', 'error'); }
+      showToast('Transação excluída com sucesso.', 'success');
+      setTransToDelete(null);
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Erro ao excluir', 'error');
+    }
   };
 
   const handleUpdate = async (data: Transaction) => {
@@ -374,6 +412,13 @@ const Dashboard = () => {
         <UploadModal
           onClose={() => setShowUploader(false)}
           onRefresh={fetchData}
+        />
+      )}
+
+      {transToDelete && (
+        <DeleteModal
+          onClose={() => setTransToDelete(null)}
+          onConfirm={() => handleDelete(transToDelete)}
         />
       )}
 
@@ -646,7 +691,7 @@ const Dashboard = () => {
                         <Pencil size={16} />
                       </button>
                       <button
-                        onClick={() => handleDelete(t.id)}
+                        onClick={() => setTransToDelete(t.id)}
                         style={{ padding: '8px', background: 'rgba(244,63,94,0.1)', border: 'none', borderRadius: '10px', color: '#f43f5e', cursor: 'pointer' }}
                       >
                         <Trash2 size={16} />

@@ -38,7 +38,7 @@ const SocratesModel = () => {
     });
 
     return (
-        <group ref={groupRef} scale={1.5}>
+        <group ref={groupRef} scale={2.8}>
             {/* The Float wrapper adds a nice subtle breathing effect regardless of scroll */}
             <Float
                 speed={1.5}

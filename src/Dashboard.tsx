@@ -7,7 +7,7 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import {
   TrendingUp, TrendingDown, Wallet, ArrowUpRight,
   ArrowDownRight, Clock, Pencil, Check, X, Trash2,
-  Plus, Calendar, Tag, FileText, AlertCircle, PieChart, BarChart3, Target
+  Plus, Calendar, Tag, FileText, AlertCircle, PieChart, BarChart3, Target, UploadCloud, BrainCircuit, Loader2, Play
 } from 'lucide-react';
 import api from './api';
 
@@ -41,7 +41,7 @@ const card = {
 };
 
 const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#a78bfa', '#fb923c', '#34d399', '#94a3b8'];
+const COLORS = ['#ef4444', '#991b1b', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#a78bfa', '#fb923c', '#34d399', '#94a3b8'];
 
 // ─── Modal de Gestão de Categorias ──────────────────────────────────────────
 const CategoryManager = ({ categories, onClose, onRefresh }: {
@@ -70,7 +70,7 @@ const CategoryManager = ({ categories, onClose, onRefresh }: {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#0f172a', border: '1px solid #3b82f640' }}>
+      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Minhas Categorias</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>
@@ -84,14 +84,14 @@ const CategoryManager = ({ categories, onClose, onRefresh }: {
             onChange={e => setNome(e.target.value)}
           />
           <select
-            style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', color: 'white' }}
+            style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '10px', color: 'white' }}
             value={tipo}
             onChange={e => setTipo(e.target.value as any)}
           >
             <option value="gasto">Gasto</option>
             <option value="ganho">Ganho</option>
           </select>
-          <button onClick={handleAdd} style={{ background: '#3b82f6', border: 'none', borderRadius: '10px', padding: '10px', color: 'white', cursor: 'pointer' }}><Plus size={20} /></button>
+          <button onClick={handleAdd} style={{ background: '#ef4444', border: 'none', borderRadius: '10px', padding: '10px', color: 'white', cursor: 'pointer' }}><Plus size={20} /></button>
         </div>
 
         <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -124,7 +124,7 @@ const EditModal = ({ transaction, categories, onClose, onSave }: {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#0f172a', border: '1px solid #3b82f640' }}>
+      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Editar Transação</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>
@@ -164,7 +164,7 @@ const EditModal = ({ transaction, categories, onClose, onSave }: {
           <div>
             <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginBottom: '8px', fontWeight: 700 }}>CATEGORIA</label>
             <select
-              style={{ width: '100%', background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: 'white', outline: 'none' }}
+              style={{ width: '100%', background: '#111111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px', color: 'white', outline: 'none' }}
               value={formData.categoriaId}
               onChange={e => setFormData({ ...formData, categoriaId: parseInt(e.target.value) })}
             >
@@ -176,11 +176,71 @@ const EditModal = ({ transaction, categories, onClose, onSave }: {
 
           <button
             onClick={() => onSave(formData)}
-            style={{ width: '100%', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', borderRadius: '14px', padding: '14px', color: 'white', fontWeight: 700, marginTop: '10px', cursor: 'pointer', boxShadow: '0 8px 16px rgba(59,130,246,0.2)' }}
+            style={{ width: '100%', background: 'linear-gradient(135deg, #ef4444, #991b1b)', border: 'none', borderRadius: '14px', padding: '14px', color: 'white', fontWeight: 700, marginTop: '10px', cursor: 'pointer', boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)' }}
           >
             Salvar Alterações
           </button>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Modal de Importação de Arquivos ───────────────────────────────────────
+const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: () => void }) => {
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleUpload = async () => {
+    if (!file) return;
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const { data } = await api.post('/upload-extract', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      // Após extrair o texto, mandamos o texto para o Chat em 'background' ou processamos via popup.
+      // Para manter simples, enviamos a string extraída diretamente como mensagem pro Chat processar (Batch)
+      alert(`Extrato processado! O AI analisou ${data.text.split('\\n').length} linhas. Feche a janela e peça para o Chat registrar.`);
+      setFile(null);
+      // Aqui faríamos idealmente: api.post('/chat', { message: `Analyze this extract:\n${data.text}` });
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Erro na importação');
+    } finally {
+      setLoading(false);
+      onClose();
+      onRefresh();
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Importar Extrato</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>
+        </div>
+
+        <div style={{ padding: '40px', border: '2px dashed rgba(239, 68, 68, 0.3)', borderRadius: '16px', textAlign: 'center', marginBottom: '20px' }}>
+          <UploadCloud size={48} color="#ef4444" style={{ margin: '0 auto 16px' }} />
+          <p style={{ fontWeight: 600, marginBottom: '8px' }}>Arraste seu arquivo PDF ou Planilha</p>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>Formatos suportados: .pdf, .csv, .xlsx</p>
+          <input
+            type="file"
+            accept=".pdf,.csv,.xlsx,.xls"
+            onChange={e => setFile(e.target.files?.[0] || null)}
+            style={{ marginTop: '20px' }}
+          />
+        </div>
+
+        <button
+          onClick={handleUpload}
+          disabled={!file || loading}
+          style={{ width: '100%', background: 'linear-gradient(135deg, #ef4444, #991b1b)', border: 'none', borderRadius: '14px', padding: '14px', color: 'white', fontWeight: 700, cursor: (!file || loading) ? 'not-allowed' : 'pointer', opacity: (!file || loading) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+        >
+          {loading ? <Loader2 className="animate-spin" size={20} /> : 'Processar Documento'}
+        </button>
       </div>
     </div>
   );
@@ -194,6 +254,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [editingTrans, setEditingTrans] = useState<Transaction | null>(null);
   const [showCatManager, setShowCatManager] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
+  const [insights, setInsights] = useState<any>(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
   const [filterText, setFilterText] = useState('');
 
   const fetchData = async () => {
@@ -210,7 +273,19 @@ const Dashboard = () => {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchInsights = async () => {
+    setLoadingInsights(true);
+    try {
+      const { data } = await api.get('/insights');
+      setInsights(data.insights);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingInsights(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); fetchInsights(); }, []);
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Excluir esta transação permanente?')) return;
@@ -295,10 +370,28 @@ const Dashboard = () => {
         />
       )}
 
+      {showUploader && (
+        <UploadModal
+          onClose={() => setShowUploader(false)}
+          onRefresh={fetchData}
+        />
+      )}
+
       {/* Hero Stats */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', margin: 0 }}>Visão Geral</h2>
+        <button
+          onClick={() => setShowUploader(true)}
+          style={{ background: '#ef4444', border: 'none', padding: '10px 20px', borderRadius: '14px', color: 'white', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)' }}
+        >
+          <UploadCloud size={20} />
+          Importar Extrato
+        </button>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
         {[
-          { label: 'Saldo Total', value: fmt(saldo), icon: <Wallet size={24} />, color: saldo >= 0 ? '#60a5fa' : '#f87171' },
+          { label: 'Saldo Total', value: fmt(saldo), icon: <Wallet size={24} />, color: saldo >= 0 ? '#f87171' : '#f43f5e' },
           { label: 'Ganhos Acumulados', value: fmt(totalGanhos), icon: <TrendingUp size={24} />, color: '#10b981' },
           { label: 'Gastos Totais', value: fmt(totalGastos), icon: <TrendingDown size={24} />, color: '#f43f5e' },
           { label: 'Guardado em Metas', value: fmt(goals.reduce((sum, g) => sum + g.current, 0)), icon: <Target size={24} />, color: '#8b5cf6' },
@@ -313,11 +406,61 @@ const Dashboard = () => {
         ))}
       </div>
 
+      {/* Smart Insights Panel */}
+      {insights ? (
+        <div style={{ ...card, background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(0,0,0,0.8))', border: '1px solid rgba(239, 68, 68, 0.2)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(239, 68, 68, 0.1)', filter: 'blur(50px)', borderRadius: '50%' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+            <div style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '12px', color: '#f87171' }}>
+              <BrainCircuit size={24} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0 }}>Smart Insights AI</h3>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>Análise avançada do seu comportamento</p>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+            {insights.fraud_alert && (
+              <div style={{ background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', padding: '16px', borderRadius: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f43f5e', fontWeight: 700, marginBottom: '8px' }}>
+                  <AlertCircle size={16} /> Alerta de Comportamento
+                </div>
+                <p style={{ fontSize: '14px', lineHeight: 1.5, margin: 0, color: 'rgba(255,255,255,0.8)' }}>Detectamos gastos fora do seu padrão recente. Revise suas últimas transações.</p>
+              </div>
+            )}
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontWeight: 700, marginBottom: '8px' }}>
+                <TrendingUp size={16} /> Dica de Economia
+              </div>
+              <p style={{ fontSize: '14px', lineHeight: 1.5, margin: 0, color: 'rgba(255,255,255,0.8)' }}>{insights.savings_tip}</p>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 700, marginBottom: '8px' }}>
+                <Target size={16} /> Previsão Mensal
+              </div>
+              <p style={{ fontSize: '14px', lineHeight: 1.5, margin: 0, color: 'rgba(255,255,255,0.8)' }}>{insights.predictive_tip}</p>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
+            "{insights.motivation}"
+          </div>
+        </div>
+      ) : loadingInsights ? (
+        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: '12px', color: '#f87171' }}>
+          <Loader2 className="animate-spin" /> Gerando insights personalizados...
+        </div>
+      ) : null}
+
       {/* Analytics Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-            <div style={{ padding: '8px', background: 'rgba(59,130,246,0.1)', borderRadius: '10px', color: '#3b82f6' }}>
+            <div style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '10px', color: '#ef4444' }}>
               <BarChart3 size={20} />
             </div>
             <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Fluxo Semanal</h3>
@@ -339,7 +482,7 @@ const Dashboard = () => {
 
         <div style={card}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-            <div style={{ padding: '8px', background: 'rgba(139,92,246,0.1)', borderRadius: '10px', color: '#8b5cf6' }}>
+            <div style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: '#ffffff' }}>
               <PieChart size={20} />
             </div>
             <h3 style={{ fontSize: '18px', fontWeight: 800 }}>Gastos por Categoria</h3>
@@ -367,9 +510,9 @@ const Dashboard = () => {
                 onClick={() => setFilterText('')}
                 style={{
                   padding: '6px 14px', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
-                  background: filterText === '' ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
-                  color: filterText === '' ? '#60a5fa' : 'rgba(255,255,255,0.6)',
-                  border: filterText === '' ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(255,255,255,0.1)'
+                  background: filterText === '' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.05)',
+                  color: filterText === '' ? '#f87171' : 'rgba(255,255,255,0.6)',
+                  border: filterText === '' ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255,255,255,0.1)'
                 }}
               >
                 Todos
@@ -380,9 +523,9 @@ const Dashboard = () => {
                   onClick={() => setFilterText(cat)}
                   style={{
                     padding: '6px 14px', borderRadius: '14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap',
-                    background: filterText === cat ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
-                    color: filterText === cat ? '#60a5fa' : 'rgba(255,255,255,0.6)',
-                    border: filterText === cat ? '1px solid rgba(59,130,246,0.3)' : '1px solid rgba(255,255,255,0.1)'
+                    background: filterText === cat ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.05)',
+                    color: filterText === cat ? '#f87171' : 'rgba(255,255,255,0.6)',
+                    border: filterText === cat ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255,255,255,0.1)'
                   }}
                 >
                   {cat}
@@ -391,9 +534,9 @@ const Dashboard = () => {
             </div>
             <button
               onClick={() => setShowCatManager(true)}
-              style={{ padding: '6px 14px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px', color: '#60a5fa', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(59,130,246,0.15)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(59,130,246,0.1)'}
+              style={{ padding: '6px 14px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px', color: '#f87171', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
             >
               <Tag size={14} /> Gerenciar Categorias
             </button>
@@ -434,7 +577,7 @@ const Dashboard = () => {
                   </td>
                   <td style={{ padding: '20px 32px' }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700 }}>
-                      <Tag size={12} color="#60a5fa" />
+                      <Tag size={12} color="#f87171" />
                       {t.categoria?.nome || 'Sem Categoria'}
                     </div>
                   </td>
@@ -447,7 +590,7 @@ const Dashboard = () => {
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                       <button
                         onClick={() => setEditingTrans(t)}
-                        style={{ padding: '8px', background: 'rgba(59,130,246,0.1)', border: 'none', borderRadius: '10px', color: '#60a5fa', cursor: 'pointer' }}
+                        style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', border: 'none', borderRadius: '10px', color: '#f87171', cursor: 'pointer' }}
                       >
                         <Pencil size={16} />
                       </button>

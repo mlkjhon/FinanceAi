@@ -54,7 +54,7 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
     return (
         <div style={{
             minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'radial-gradient(circle at top right, #0d1b3e, #0a0e1a)', color: 'white',
+            background: 'radial-gradient(circle at top right, #3f0909, #050505)', color: 'white',
             padding: '20px', position: 'relative'
         }}>
             {/* Back Button */}
@@ -75,15 +75,15 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
             </button>
 
             {/* Decorative Glows */}
-            <div style={{ position: 'absolute', top: '10%', right: '10%', width: '300px', height: '300px', background: 'rgba(59,130,246,0.1)', filter: 'blur(100px)', borderRadius: '50%' }} />
-            <div style={{ position: 'absolute', bottom: '10%', left: '10%', width: '300px', height: '300px', background: 'rgba(139,92,246,0.1)', filter: 'blur(100px)', borderRadius: '50%' }} />
+            <div style={{ position: 'absolute', top: '10%', right: '10%', width: '300px', height: '300px', background: 'rgba(239, 68, 68, 0.1)', filter: 'blur(100px)', borderRadius: '50%' }} />
+            <div style={{ position: 'absolute', bottom: '10%', left: '10%', width: '300px', height: '300px', background: 'rgba(153, 27, 27, 0.1)', filter: 'blur(100px)', borderRadius: '50%' }} />
 
             <div style={glassStyle}>
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                     <div style={{
-                        width: '64px', height: '64px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                        width: '64px', height: '64px', background: 'linear-gradient(135deg, #ef4444, #991b1b)',
                         borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        margin: '0 auto 24px', boxShadow: '0 10px 25px rgba(59,130,246,0.3)'
+                        margin: '0 auto 24px', boxShadow: '0 10px 25px rgba(239, 68, 68, 0.3)'
                     }}>
                         {isLogin ? <User color="white" size={32} /> : <ShieldCheck color="white" size={32} />}
                     </div>
@@ -157,7 +157,7 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
                         disabled={loading}
                         style={{
                             padding: '16px',
-                            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                            background: 'linear-gradient(135deg, #ef4444, #991b1b)',
                             border: 'none',
                             borderRadius: '16px',
                             color: 'white',
@@ -169,7 +169,7 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
                             justifyContent: 'center',
                             gap: '10px',
                             marginTop: '10px',
-                            boxShadow: '0 10px 20px rgba(59,130,246,0.2)',
+                            boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)',
                             transition: 'all 0.2s'
                         }}
                         onMouseEnter={e => !loading && (e.currentTarget.style.transform = 'translateY(-2px)')}
@@ -187,7 +187,7 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
                 <div style={{ marginTop: '32px', textAlign: 'center' }}>
                     <button
                         onClick={() => setIsLogin(!isLogin)}
-                        style={{ background: 'none', border: 'none', color: '#60a5fa', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
+                        style={{ background: 'none', border: 'none', color: '#f87171', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
                     >
                         {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça Login'}
                     </button>

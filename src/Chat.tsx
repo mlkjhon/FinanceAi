@@ -81,7 +81,7 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
     return (
       <div style={{
         width: '40px', height: '40px', borderRadius: '12px',
-        background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
+        background: 'linear-gradient(135deg, #ef4444, #991b1b)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0, color: 'white', fontWeight: 700, fontSize: '16px'
       }}>
@@ -115,9 +115,9 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
             {m.sender === 'bot' ? (
               <div style={{
                 width: '40px', height: '40px', borderRadius: '12px',
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                background: 'linear-gradient(135deg, #ef4444, #991b1b)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)',
                 flexShrink: 0
               }}>
                 <Bot size={20} color="white" />
@@ -130,10 +130,10 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
               <div style={{
                 padding: '14px 20px',
                 borderRadius: m.sender === 'user' ? '20px 4px 20px 20px' : '4px 20px 20px 20px',
-                background: m.sender === 'user' ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'rgba(255,255,255,0.04)',
+                background: m.sender === 'user' ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.06)',
                 color: 'white', fontSize: '15px', lineHeight: 1.5,
-                boxShadow: m.sender === 'user' ? '0 10px 20px rgba(37,99,235,0.15)' : 'none'
+                boxShadow: m.sender === 'user' ? '0 10px 20px rgba(239, 68, 68, 0.15)' : 'none'
               }}>
                 {m.texto}
               </div>
@@ -147,7 +147,7 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
         {isTyping && (
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', paddingLeft: '8px' }}>
             <div style={{ display: 'flex', gap: '4px' }}>
-              {[0, 1, 2].map(i => <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6', animation: `typing 1.4s infinite ease-in-out both`, animationDelay: `${i * 0.2}s` }} />)}
+              {[0, 1, 2].map(i => <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', animation: `typing 1.4s infinite ease-in-out both`, animationDelay: `${i * 0.2}s` }} />)}
             </div>
             <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '0.05em' }}>MENTOR PROCESSANDO...</span>
           </div>
@@ -166,7 +166,7 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
             color: 'white', fontSize: '15px', outline: 'none',
             boxShadow: '0 8px 30px rgba(0,0,0,0.2)', transition: 'all 0.2s'
           }}
-          onFocus={e => e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'}
+          onFocus={e => e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)'}
           onBlur={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'}
         />
         <button
@@ -174,11 +174,11 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
           disabled={!input.trim() || isTyping}
           style={{
             position: 'absolute', right: '10px', top: '10px', bottom: '10px',
-            aspectRatio: '1', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            aspectRatio: '1', background: 'linear-gradient(135deg, #ef4444, #991b1b)',
             border: 'none', borderRadius: '16px', color: 'white',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', transition: 'all 0.2s',
-            boxShadow: '0 4px 12px rgba(59,130,246,0.3)'
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
           }}
           onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}

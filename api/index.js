@@ -8,10 +8,17 @@ const {
   authMiddleware, adminMiddleware
 } = require('./lib/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const multer = require('multer');
+const pdfParse = require('pdf-parse');
+const csv = require('csv-parser');
+const xlsx = require('xlsx');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const upload = multer({ dest: 'uploads/' });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Proteção Básica de Headers
@@ -399,10 +406,13 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     5. Social: { "tipo": "social_buscar" | "social_seguir", "nome": string }
     6. Conversa/Dica: { "tipo": "conversa", "resposta": string } (Seja empático e dê dicas úteis)
 
+    7. Análise de Arquivo: { "tipo": "arquivo_extraido", "transacoes": [{ "data": "YYYY-MM-DD", "descricao": string, "valor": number, "tipo": "gasto"|"ganho", "categoria": string }] } (Para extrair dados do OCR)
+
     REGRAS CRÍTICAS:
     - Extraia o valor numérico mesmo se estiver por extenso (ex: "mil" = 1000).
     - IMPORTANTE: Se o usuário disser "adicione na meta", "guardei na meta", "depositei no objetivo", ou qualquer variação de mover dinheiro para uma meta, MAPEE ESTRITAMENTE PARA A AÇÃO 3 (Movimentar Meta). NUNCA registre isso como "gasto" ou "ganho".
     - IMPORTANTE: Se o usuário disser "crie uma meta" ou "nova meta", MAPEE ESTRITAMENTE PARA A AÇÃO 2 (Criar Meta).
+    - IMPORTANTE: Se a mensagem for visivelmente um extrato bancário enorme com várias linhas e datas, MAPEE ESTRITAMENTE PARA A AÇÃO 7 (Análise de Arquivo).
     - Para gastos/ganhos normais, use preferencialmente uma das categorias disponíveis: ${catList}.
     - Responda EXCLUSIVAMENTE com o objeto JSON puro, sem textos adicionais, sem blocos markdown marcados por crases, e sem palavras como 'json'.
 
@@ -504,6 +514,27 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       return res.json({ success: true, data: trans, message: botMsg });
     }
 
+    // ── Arquivo Extraído (Transações em Lote do OCR) ─────────────────────────
+    if (aiResponse.tipo === 'arquivo_extraido' && Array.isArray(aiResponse.transacoes)) {
+      const transacoesInseridas = [];
+      for (const t of aiResponse.transacoes) {
+        try {
+          const cat = await ensureCategory(t.categoria || 'Outros', t.tipo, req.user.id);
+          const insert = await db.query(
+            'INSERT INTO "Transaction" (tipo, valor, categoriaid, descricao, data, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [t.tipo, Math.abs(t.valor), cat.id, t.descricao, t.data, req.user.id]
+          );
+          transacoesInseridas.push(insert.rows[0]);
+        } catch (e) {
+          console.error('Erro ao inserir transação do extrato:', e);
+        }
+      }
+
+      const botMsg = `📁 Extrato Processado! Registrei ${transacoesInseridas.length} transações automaticamente baseada na sua importação. Acesse o Dashboard para revisá-las e editar se necessário.`;
+      await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+      return res.json({ success: true, data: transacoesInseridas, message: botMsg });
+    }
+
     // ── Resumo Dashboard ──────────────────────────────────────────────────────
     if (aiResponse.tipo === 'dashboard_resumo') {
       const transResult = await db.query('SELECT * FROM "Transaction" WHERE userid = $1', [req.user.id]);
@@ -521,7 +552,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       const nomeBusca = aiResponse.nome || '';
       const userResult = await db.query(
         'SELECT * FROM "User" WHERE nome ILIKE $1 AND id <> $2 LIMIT 5',
-        [`% ${nomeBusca}% `, req.user.id]
+        [`%${nomeBusca}%`, req.user.id]
       );
       const usuarios = userResult.rows;
 
@@ -575,6 +606,111 @@ app.get('/api/chat/history', authMiddleware, async (req, res) => {
   res.json(result.rows);
 });
 
+// ─── Importação de Extratos / CSV / Excel ───────────────────────────────────
+
+app.post('/api/upload-extract', authMiddleware, upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+  }
+
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  const filePath = req.file.path;
+  let rawText = '';
+
+  try {
+    if (ext === '.pdf') {
+      const dataBuffer = fs.readFileSync(filePath);
+      const data = await pdfParse(dataBuffer);
+      rawText = data.text;
+    } else if (ext === '.csv') {
+      rawText = await new Promise((resolve, reject) => {
+        const results = [];
+        fs.createReadStream(filePath)
+          .pipe(csv())
+          .on('data', (data) => results.push(JSON.stringify(data)))
+          .on('end', () => resolve(results.join('\n')))
+          .on('error', reject);
+      });
+    } else if (ext === '.xlsx' || ext === '.xls') {
+      const workbook = xlsx.readFile(filePath);
+      const sheetName = workbook.SheetNames[0];
+      const rows = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
+      rawText = rows;
+    } else {
+      fs.unlinkSync(filePath);
+      return res.status(400).json({ error: 'Formato de arquivo não suportado. Envie .pdf, .csv ou .xlsx' });
+    }
+
+    // Limpar arquivo temporário
+    fs.unlinkSync(filePath);
+
+    if (!rawText || rawText.trim().length === 0) {
+      return res.status(400).json({ error: 'Não foi possível extrair texto do arquivo.' });
+    }
+
+    // Truncate para evitar limite de tokens (mantém as primeiras 60 linhas mais ou menos)
+    const truncatedText = rawText.split('\n').slice(0, 100).join('\n');
+    res.json({ success: true, text: truncatedText });
+
+  } catch (err) {
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    console.error('Erro na extração do arquivo:', err);
+    res.status(500).json({ error: 'Falha ao processar o arquivo.', details: err.message });
+  }
+});
+
+// ─── AI Insights & Predictions ────────────────────────────────────────────────
+
+app.get('/api/insights', authMiddleware, async (req, res) => {
+  try {
+    const userResult = await db.query('SELECT * FROM "User" WHERE id = $1', [req.user.id]);
+    const user = userResult.rows[0];
+    if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
+    const profile = user.onboardingdata ? JSON.parse(user.onboardingdata).profile : 'Conservador';
+
+    // Coletar as últimas 100 transações
+    const transResult = await db.query(
+      `SELECT t.*, c.nome as categoria_nome 
+       FROM "Transaction" t 
+       LEFT JOIN "Category" c ON t.categoriaid = c.id 
+       WHERE t.userid = $1 
+       ORDER BY t.data DESC LIMIT 100`,
+      [req.user.id]
+    );
+
+    const transData = transResult.rows.map(t => `- ${t.data}: ${t.tipo} R$${t.valor} (${t.categoria_nome})`).join('\n');
+
+    const goalsResult = await db.query('SELECT * FROM "Goal" WHERE userid = $1', [req.user.id]);
+    const goalsData = goalsResult.rows.map(g => `- ${g.name}: R$${g.current}/R$${g.target}`).join('\n');
+
+    const prompt = `Você é um consultor financeiro ultra-avançado especializado em detecção de padrões, previsões preditivas e análises de fraude.
+    Analise o perfil e o histórico de transações a seguir:
+
+    PERFIL DO USUÁRIO: ${profile}
+    METAS ATUAIS: ${goalsData || 'Nenhuma meta'}
+    ÚLTIMAS 100 TRANSAÇÕES:
+    ${transData || 'Nenhuma transação registrada ainda'}
+
+    Gere um JSON RIGOROSO com as seguintes chaves (sem formatação markdown de JSON envolto por \`\`\`json):
+    {
+      "predictive_tip": "Um texto rico prevendo gastos futuros baseando-se no que ele já gastou, ou apontando exageros no mês",
+      "savings_tip": "Um texto com uma sugestão altamente personalizada de economia onde ele está gastando muito num padrão repetitivo num espaço de tempo.",
+      "fraud_alert": "Um boolean (true/false) se as transações fugiram drasticamente do padrão (e.g. muitos pagamentos de alto valor seguidos), com um texto explicativo em caso positivo ou uma dica em caso negativo.",
+      "motivation": "Frase de incentivo alinhada ao nível financeiro do usuário"
+    }`;
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const textResponse = result.response.text().replace(/```json | ```/g, '').trim();
+    const jsonResponse = JSON.parse(textResponse);
+
+    res.json({ success: true, insights: jsonResponse });
+  } catch (e) {
+    console.error('Insight Generator Error:', e);
+    res.status(500).json({ error: 'Falha ao gerar insights avançados' });
+  }
+});
+
 // ─── Social / Follow Routes ───────────────────────────────────────────────────
 
 app.get('/api/social/search', authMiddleware, async (req, res) => {
@@ -585,9 +721,9 @@ app.get('/api/social/search', authMiddleware, async (req, res) => {
     const userResult = await db.query(
       `SELECT id, nome, avatarurl, email 
        FROM "User"
-WHERE(nome ILIKE $1 OR email ILIKE $1) AND id <> $2 
+    WHERE(nome ILIKE $1 OR email ILIKE $1) AND id <> $2 
        LIMIT 15`,
-      [`% ${q}% `, req.user.id]
+      [`%${q}%`, req.user.id]
     );
 
     // Verificar quais já estamos seguindo

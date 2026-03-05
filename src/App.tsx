@@ -75,28 +75,28 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
 
   return (
     <div style={{
-      minHeight: '100vh', background: 'radial-gradient(circle at top right, #0a1628, #0a0e1a)',
+      minHeight: '100vh', background: 'radial-gradient(circle at top right, #0a0a0a, #000000)',
       color: 'white', fontFamily: "'Inter', sans-serif"
     }}>
       {/* Background Glows */}
-      <div style={{ position: 'fixed', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(59,130,246,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      <div style={{ position: 'fixed', bottom: '-10%', left: '-5%', width: '30%', height: '30%', background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(239, 68, 68, 0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', bottom: '-10%', left: '-5%', width: '30%', height: '30%', background: 'radial-gradient(circle, rgba(153, 27, 27, 0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
       {/* Header */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(16px)',
-        background: 'rgba(10, 14, 26, 0.8)', borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: 'rgba(5, 5, 5, 0.8)', borderBottom: '1px solid rgba(255,255,255,0.06)',
         padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
-            width: '40px', height: '40px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            width: '40px', height: '40px', background: 'linear-gradient(135deg, #ef4444, #991b1b)',
             borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 15px rgba(59,130,246,0.4)'
+            boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)'
           }}>
             <ShieldCheck color="white" size={24} />
           </div>
-          <h1 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Finance<span style={{ color: '#60a5fa' }}>AI</span></h1>
+          <h1 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.02em', margin: 0 }}>Finance<span style={{ color: '#f87171' }}>AI</span></h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(16,185,129,0.1)', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(16,185,129,0.2)' }}>
             <div style={{ width: '6px', height: '6px', background: '#10b981', borderRadius: '50%', boxShadow: '0 0 6px #10b981' }} />
             <span style={{ fontSize: '10px', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sistema Online</span>
@@ -130,14 +130,14 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
             {showNotifications && (
               <div style={{
                 position: 'absolute', top: '100%', right: 0, marginTop: '16px', width: '340px',
-                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)',
+                background: 'rgba(0, 0, 0, 0.95)', backdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 20px rgba(59,130,246,0.1)', zIndex: 200, padding: '16px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 20px rgba(239, 68, 68, 0.1)', zIndex: 200, padding: '16px',
                 animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                   <span style={{ fontWeight: 800, fontSize: '15px', letterSpacing: '-0.01em' }}>Notificações</span>
-                  {unreadCount > 0 && <span style={{ fontSize: '10px', background: 'rgba(59,130,246,0.2)', color: '#60a5fa', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>{unreadCount} novas</span>}
+                  {unreadCount > 0 && <span style={{ fontSize: '10px', background: 'rgba(239,68,68,0.2)', color: '#f87171', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>{unreadCount} novas</span>}
                 </div>
                 <div style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
                   {notifications.length === 0 ? (
@@ -149,12 +149,12 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
                     notifications.map(n => (
                       <div key={n.id} style={{
                         padding: '12px 14px', borderRadius: '12px',
-                        background: n.lida ? 'rgba(255,255,255,0.02)' : 'rgba(59,130,246,0.08)',
-                        marginBottom: '8px', border: n.lida ? '1px solid transparent' : '1px solid rgba(59,130,246,0.15)',
+                        background: n.lida ? 'rgba(255,255,255,0.02)' : 'rgba(239, 68, 68,0.08)',
+                        marginBottom: '8px', border: n.lida ? '1px solid transparent' : '1px solid rgba(239, 68, 68,0.15)',
                         transition: 'all 0.2s', cursor: 'default'
                       }}>
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                          <div style={{ width: '8px', height: '8px', background: n.lida ? 'transparent' : '#3b82f6', borderRadius: '50%', marginTop: '5px', flexShrink: 0 }} />
+                          <div style={{ width: '8px', height: '8px', background: n.lida ? 'transparent' : '#ef4444', borderRadius: '50%', marginTop: '5px', flexShrink: 0 }} />
                           <div style={{ flex: 1 }}>
                             <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.4' }}>{n.mensagem}</p>
                             <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', display: 'block', fontWeight: 500 }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • Justo agora</span>
@@ -263,21 +263,21 @@ const App = () => {
   if (loading) {
     return (
       <div style={{
-        minHeight: '100vh', background: '#0a0e1a', color: 'white',
+        minHeight: '100vh', background: '#050505', color: 'white',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         gap: '24px', fontFamily: "'Inter', sans-serif"
       }}>
         <div style={{ position: 'relative', width: '80px', height: '80px' }}>
           <div style={{
             position: 'absolute', inset: 0, borderRadius: '50%',
-            border: '3px solid rgba(59,130,246,0.1)', borderTopColor: '#3b82f6',
+            border: '3px solid rgba(239, 68, 68, 0.1)', borderTopColor: '#ef4444',
             animation: 'spin 1s linear infinite'
           }} />
           <div style={{
             position: 'absolute', inset: '8px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            background: 'linear-gradient(135deg, #ef4444, #991b1b)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 20px rgba(59,130,246,0.3)',
+            boxShadow: '0 0 20px rgba(239, 68, 68, 0.3)',
             animation: 'pulse 2s infinite'
           }}>
             <ShieldCheck size={32} color="white" />
@@ -285,7 +285,7 @@ const App = () => {
         </div>
         <div style={{ textAlign: 'center' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
-            Finance<span style={{ color: '#60a5fa' }}>AI</span>
+            Finance<span style={{ color: '#f87171' }}>AI</span>
           </h2>
           <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
             Preparando seu ambiente seguro...

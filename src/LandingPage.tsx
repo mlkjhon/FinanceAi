@@ -128,14 +128,14 @@ const LandingPage = () => {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#0a0e1a',
+            background: '#050505',
             color: 'white',
             fontFamily: "'Inter', sans-serif",
             overflowX: 'hidden'
         }}>
             {/* Background Ambient Glows */}
-            <div style={{ position: 'fixed', top: '-10%', right: '-5%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-            <div style={{ position: 'fixed', bottom: '-10%', left: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-10%', right: '-5%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(239, 68, 68, 0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '-10%', left: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(153, 27, 27, 0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
             {/* Hero Section */}
             <section style={{ ...sectionStyle, textAlign: 'center', paddingTop: '120px', minHeight: '80vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
@@ -143,11 +143,11 @@ const LandingPage = () => {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '8px',
-                    background: 'rgba(59, 130, 246, 0.1)',
+                    background: 'rgba(239, 68, 68, 0.1)',
                     padding: '8px 16px',
                     borderRadius: '100px',
-                    border: '1px solid rgba(59, 130, 246, 0.2)',
-                    color: '#60a5fa',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    color: '#f87171',
                     fontSize: '14px',
                     fontWeight: 600,
                     marginBottom: '24px',
@@ -192,7 +192,7 @@ const LandingPage = () => {
                         onClick={() => navigate('/auth')}
                         style={{
                             padding: '16px 32px',
-                            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                            background: 'linear-gradient(135deg, #ef4444, #991b1b)',
                             border: 'none',
                             borderRadius: '16px',
                             color: 'white',
@@ -202,7 +202,7 @@ const LandingPage = () => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            boxShadow: '0 10px 40px rgba(59, 130, 246, 0.3)',
+                            boxShadow: '0 10px 40px rgba(239, 68, 68, 0.3)',
                             transition: 'transform 0.2s'
                         }}
                         onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
@@ -248,7 +248,7 @@ const LandingPage = () => {
                     position: 'relative'
                 }}>
                     <div style={{
-                        background: '#0a0e1a',
+                        background: '#050505',
                         borderRadius: '28px',
                         minHeight: '520px',
                         width: '100%',
@@ -262,13 +262,13 @@ const LandingPage = () => {
                         {/* Area Chart Section */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div style={{ display: 'flex', gap: '16px' }}>
-                                <div style={{ ...card, flex: 1, padding: '20px', background: 'rgba(59,130,246,0.05)' }}>
+                                <div style={{ ...card, flex: 1, padding: '20px', background: 'rgba(239,68,68,0.05)' }}>
                                     <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '4px' }}>SALDO TOTAL</p>
                                     <p style={{ fontSize: '24px', fontWeight: 900 }}>R$ 12.450,00</p>
                                 </div>
-                                <div style={{ ...card, flex: 1, padding: '20px', background: 'rgba(16,185,129,0.05)' }}>
+                                <div style={{ ...card, flex: 1, padding: '20px', background: 'rgba(255,255,255,0.05)' }}>
                                     <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '4px' }}>ECONOMIA MÊS</p>
-                                    <p style={{ fontSize: '24px', fontWeight: 900, color: '#10b981' }}>+ 18%</p>
+                                    <p style={{ fontSize: '24px', fontWeight: 900, color: '#f87171' }}>+ 18%</p>
                                 </div>
                             </div>
 
@@ -276,8 +276,8 @@ const LandingPage = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                                     <h4 style={{ fontSize: '16px', fontWeight: 800 }}>Análise de Fluxo</h4>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6' }} />
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#8b5cf6' }} />
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
+                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#991b1b' }} />
                                     </div>
                                 </div>
                                 <div style={{ height: '200px', width: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
@@ -286,7 +286,7 @@ const LandingPage = () => {
                                         <div key={i} style={{
                                             flex: 1,
                                             height: `${h}%`,
-                                            background: `linear-gradient(to top, rgba(59,130,246,${0.1 + (i * 0.05)}), rgba(139,92,246,${0.2 + (i * 0.05)}))`,
+                                            background: `linear-gradient(to top, rgba(239,68,68,${0.1 + (i * 0.05)}), rgba(153,27,27,${0.2 + (i * 0.05)}))`,
                                             borderRadius: '4px 4px 0 0',
                                             transition: 'height 1s ease'
                                         }} />
@@ -298,12 +298,12 @@ const LandingPage = () => {
                         {/* Mini AI Chat Section */}
                         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '12px' }}>
-                                <BrainCircuit size={20} color="#60a5fa" />
+                                <BrainCircuit size={20} color="#f87171" />
                                 <span style={{ fontSize: '14px', fontWeight: 800 }}>FinanceAI Assistant</span>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-                                <div style={{ alignSelf: 'flex-end', background: '#3b82f6', padding: '10px 14px', borderRadius: '16px 16px 0 16px', fontSize: '13px' }}>
+                                <div style={{ alignSelf: 'flex-end', background: '#ef4444', padding: '10px 14px', borderRadius: '16px 16px 0 16px', fontSize: '13px' }}>
                                     Gastei R$ 45 no almoço hoje
                                 </div>
                                 <div style={{ alignSelf: 'flex-start', background: 'rgba(255,255,255,0.05)', padding: '10px 14px', borderRadius: '16px 16px 16px 0', fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
@@ -317,7 +317,7 @@ const LandingPage = () => {
                         </div>
 
                         {/* Abstract background blur in mockup */}
-                        <div style={{ position: 'absolute', top: '20%', left: '30%', width: '200px', height: '200px', background: 'rgba(139,92,246,0.1)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', top: '20%', left: '30%', width: '200px', height: '200px', background: 'rgba(239,68,68,0.1)', filter: 'blur(80px)', pointerEvents: 'none' }} />
                     </div>
                 </div>
             </section>
@@ -331,7 +331,7 @@ const LandingPage = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                     <div style={featureCardStyle}>
-                        <div style={{ width: '48px', height: '48px', background: 'rgba(59,130,246,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa' }}>
+                        <div style={{ width: '48px', height: '48px', background: 'rgba(239,68,68,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171' }}>
                             <MessageSquare size={24} />
                         </div>
                         <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Chat com IA</h3>
@@ -339,7 +339,7 @@ const LandingPage = () => {
                     </div>
 
                     <div style={featureCardStyle}>
-                        <div style={{ width: '48px', height: '48px', background: 'rgba(139,92,246,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
+                        <div style={{ width: '48px', height: '48px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
                             <LayoutDashboard size={24} />
                         </div>
                         <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Dashboard Premium</h3>
@@ -347,7 +347,7 @@ const LandingPage = () => {
                     </div>
 
                     <div style={featureCardStyle}>
-                        <div style={{ width: '48px', height: '48px', background: 'rgba(16,185,129,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
+                        <div style={{ width: '48px', height: '48px', background: 'rgba(153,27,27,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
                             <ShieldCheck size={24} />
                         </div>
                         <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Segurança Total</h3>
@@ -360,15 +360,15 @@ const LandingPage = () => {
             <section style={{ ...sectionStyle, background: 'rgba(255,255,255,0.02)', borderRadius: '40px', padding: '60px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', textAlign: 'center' }}>
                     <div>
-                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#3b82f6' }}>100%</div>
+                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#ef4444' }}>100%</div>
                         <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Privado e Seguro</div>
                     </div>
                     <div>
-                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#8b5cf6' }}>24/7</div>
+                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#f87171' }}>24/7</div>
                         <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Assistente Generativo</div>
                     </div>
                     <div>
-                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#10b981' }}>+80k</div>
+                        <div style={{ fontSize: '48px', fontWeight: 900, color: '#ffffff' }}>+80k</div>
                         <div style={{ color: 'rgba(255,255,255,0.4)', marginTop: '8px' }}>Dados Processados</div>
                     </div>
                 </div>
@@ -413,7 +413,7 @@ const LandingPage = () => {
                             <div key={idx} style={{ ...card, padding: '40px' }}>
                                 <p style={{ fontSize: '18px', lineHeight: 1.6, marginBottom: '24px', fontStyle: 'italic', color: 'rgba(255,255,255,0.8)' }}>"{rev.text}"</p>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(45deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(45deg, #ef4444, #991b1b)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <UserCircle2 color="white" />
                                     </div>
                                     <div>

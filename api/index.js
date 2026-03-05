@@ -1,3 +1,5 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -12,8 +14,6 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const csv = require('csv-parser');
 const xlsx = require('xlsx');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,6 +26,14 @@ app.use(helmet());
 // Cross-Origin Resource Sharing
 app.use(cors());
 app.use(express.json());
+
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+app.get('/api/ping', (req, res) => res.json({ status: 'ok', time: new Date() }));
 
 // Limiter para prevenir força bruta no Login (max 10 requisições/15min)
 const loginLimiter = rateLimit({
@@ -965,8 +973,6 @@ function fallbackParser(text) {
   return { tipo, valor, categoria: tipo === 'ganho' ? 'Renda' : 'Outros', descricao: text, data: new Date().toISOString().split('T')[0] };
 }
 
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT} `));
-}
+app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
 
 module.exports = app;

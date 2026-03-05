@@ -76,12 +76,7 @@ const AdminDashboard = () => {
         });
     };
 
-    const cardStyle = {
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '20px',
-        padding: '24px',
-    };
+    const cardContentStyle = { padding: '24px' };
 
     const tabStyle = (active: boolean) => ({
         padding: '12px 24px',
@@ -98,21 +93,22 @@ const AdminDashboard = () => {
     if (loading) return <div style={{ color: 'white', padding: '40px' }}>Preparando painel de controle...</div>;
 
     return (
-        <div style={{ color: 'white' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '40px' }}>
-                <div style={{ padding: '16px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', borderRadius: '18px', boxShadow: '0 8px 16px rgba(59,130,246,0.3)' }}>
-                    <ShieldCheck size={32} color="white" />
+        <div style={{ color: 'white', maxWidth: '1200px', margin: '0 auto', paddingBottom: '80px' }}>
+            <div className="glass" style={{ padding: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    <div style={{ padding: '16px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', borderRadius: '18px', boxShadow: '0 8px 16px rgba(59,130,246,0.3)' }}>
+                        <ShieldCheck size={32} color="white" />
+                    </div>
+                    <div>
+                        <h1 style={{ fontSize: '32px', fontWeight: 900, margin: 0, letterSpacing: '-0.02em', color: 'white' }}>Super Painel Admin</h1>
+                        <p style={{ color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', fontSize: '16px' }}>Governança e métricas globais da FinanceAI</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>Super Painel Admin</h1>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', margin: '4px 0 0', fontSize: '16px' }}>Governança e métricas globais da FinanceAI</p>
+                <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '16px' }}>
+                    <button style={tabStyle(activeTab === 'stats')} onClick={() => setActiveTab('stats')}>Visão Geral</button>
+                    <button style={tabStyle(activeTab === 'users')} onClick={() => setActiveTab('users')}>Usuários</button>
+                    <button style={tabStyle(activeTab === 'categories')} onClick={() => setActiveTab('categories')}>Categorias Globais</button>
                 </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', background: 'rgba(255,255,255,0.02)', padding: '6px', borderRadius: '18px', width: 'fit-content', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <button style={tabStyle(activeTab === 'stats')} onClick={() => setActiveTab('stats')}>Visão Geral</button>
-                <button style={tabStyle(activeTab === 'users')} onClick={() => setActiveTab('users')}>Usuários</button>
-                <button style={tabStyle(activeTab === 'categories')} onClick={() => setActiveTab('categories')}>Categorias Globais</button>
             </div>
 
             {activeTab === 'stats' && (
@@ -123,22 +119,24 @@ const AdminDashboard = () => {
                             { label: 'Transações Totais', value: stats.totalTransactions, icon: <BarChart2 />, color: '#10b981' },
                             { label: 'Volume Financeiro', value: stats.totalVolume.toLocaleString('pt-BR'), icon: <DollarSign />, color: '#f59e0b' },
                         ].map((c, i) => (
-                            <div key={i} style={cardStyle}>
-                                <div style={{ color: c.color, marginBottom: '16px' }}>{c.icon}</div>
-                                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '4px' }}>{c.label.toUpperCase()}</div>
-                                <div style={{ fontSize: '36px', fontWeight: 800 }}>{c.value}</div>
+                            <div key={i} className="glass" style={cardContentStyle}>
+                                <div style={{ color: c.color, marginBottom: '16px', background: `${c.color}15`, width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    {React.cloneElement(c.icon as React.ReactElement, { size: 20 })}
+                                </div>
+                                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: '8px' }}>{c.label}</div>
+                                <div style={{ fontSize: '32px', fontWeight: 900, color: 'white' }}>{c.value}</div>
                             </div>
                         ))}
                     </div>
 
-                    <div style={{ ...cardStyle, height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(59,130,246,0.03)', borderStyle: 'dashed' }}>
-                        <p style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>Gráficos de crescimento em tempo real (Em breve)</p>
+                    <div className="glass" style={{ ...cardContentStyle, height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(59,130,246,0.05)', borderStyle: 'dashed', borderColor: 'rgba(59,130,246,0.3)' }}>
+                        <p style={{ color: 'rgba(59,130,246,0.5)', fontWeight: 700, fontSize: '15px' }}>Análise preditiva e crescimento (Módulo IA em breve)</p>
                     </div>
                 </div>
             )}
 
             {activeTab === 'users' && (
-                <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+                <div className="glass" style={{ ...cardContentStyle, padding: 0, overflow: 'hidden' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.3)', textAlign: 'left' }}>

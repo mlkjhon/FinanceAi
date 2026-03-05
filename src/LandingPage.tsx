@@ -130,18 +130,18 @@ const LandingPage = () => {
     return (
         <div style={{
             minHeight: '100vh',
-            background: '#050505',
+            background: '#020202',
             color: 'white',
             fontFamily: "'Inter', sans-serif",
             overflowX: 'hidden',
             position: 'relative'
         }}>
-            {/* 3D Background replaced by Premium Hero Art */}
-            <div style={{ position: 'fixed', top: 0, right: '-5%', width: '60%', height: '100vh', zIndex: 0, pointerEvents: 'none', opacity: 0.6 }}>
+            {/* Premium Philosopher 3D Art */}
+            <div style={{ position: 'fixed', bottom: '-40px', right: '-15%', width: '85%', height: '110vh', zIndex: 0, pointerEvents: 'none', opacity: 0.9 }}>
                 <img
                     src="/hero-3d.png"
-                    alt="FinanceAI Premium Art"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 50px rgba(239, 68, 68, 0.2))' }}
+                    alt="FinanceAI Philosopher"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 100px rgba(255, 255, 255, 0.05))' }}
                 />
             </div>
 

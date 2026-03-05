@@ -92,29 +92,23 @@ const Investments = () => {
         setMonthlyContributionRaw(parseCurrency(formatted));
     };
 
-    const cardStyle = {
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '24px',
-        padding: '32px'
-    };
+    const cardContentStyle = { padding: '32px' };
 
     return (
-        <div style={{ color: 'white' }}>
-            <div style={{ marginBottom: '40px' }}>
-                <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '8px' }}>Investimentos Inteligentes</h1>
+        <div style={{ color: 'white', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '80px' }}>
+            <div className="glass" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.02em', color: 'white' }}>Investimentos Inteligentes</h1>
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px' }}>Simule seu futuro com taxas atualizadas em tempo real.</p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
                 {/* Simulador */}
-                <div style={cardStyle}>
+                <div className="glass" style={cardContentStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-                        <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '12px', color: '#ef4444' }}>
+                        <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '14px', color: '#ef4444' }}>
                             <Calculator size={24} />
                         </div>
-                        <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Simulador de Liberdade</h3>
+                        <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Simulador de Liberdade</h3>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -166,8 +160,8 @@ const Investments = () => {
 
                 {/* Market Stats */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <div style={cardStyle}>
-                        <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginBottom: '24px' }}>TAXAS DO DIA (MUNDO REAL)</h3>
+                    <div className="glass" style={cardContentStyle}>
+                        <h3 style={{ fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginBottom: '24px', textTransform: 'uppercase' }}>Taxas do Dia</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {marketRates.slice(0, 3).map((tax, i) => {
                                 const isSelected = selectedRateName === tax.name;
@@ -217,12 +211,12 @@ const Investments = () => {
                         >Ver Todas as Taxas</button>
                     </div>
 
-                    <div style={{ ...cardStyle, background: 'rgba(5,5,5,0.8)', border: '1px solid rgba(239,68,68,0.3)', borderLeft: '4px solid #ef4444' }}>
+                    <div className="glass" style={{ ...cardContentStyle, background: 'rgba(239,68,68,0.05)', borderColor: 'rgba(239,68,68,0.2)', borderLeft: '4px solid #ef4444' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                            <ShieldCheck size={20} />
-                            <span style={{ fontWeight: 700, fontSize: '14px' }}>Dica do Mentor</span>
+                            <div style={{ color: '#ef4444' }}><ShieldCheck size={20} /></div>
+                            <span style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', color: '#ef4444' }}>Dica do Mentor</span>
                         </div>
-                        <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 }}>"{currentTip}"</p>
+                        <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, fontWeight: 500 }}>"{currentTip}"</p>
                     </div>
                 </div>
             </div>

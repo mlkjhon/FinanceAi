@@ -94,28 +94,25 @@ const Goals = () => {
         } catch (e) { console.error(e); }
     };
 
-    const cardStyle = {
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '24px',
-        padding: '24px',
-        marginBottom: '20px'
-    };
+    const cardContentStyle = { padding: '24px', marginBottom: '20px' };
 
     const totalSaved = goals.reduce((acc, g) => acc + g.current, 0);
 
     if (loading) return <div style={{ color: 'white' }}>Carregando metas...</div>;
 
     return (
-        <div style={{ color: 'white' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
+        <div style={{ color: 'white', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '80px' }}>
+            <div className="glass" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px' }}>
                 <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '8px' }}>Minhas Metas</h1>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px' }}>Defina seus objetivos e acompanhe sua evolução.</p>
+                    <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.02em', color: 'white' }}>Minhas Metas</h1>
+                    <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Dê vida aos seus planos com acompanhamento inteligente.</p>
                 </div>
                 {!showNewGoal && (
-                    <button onClick={() => setShowNewGoal(true)} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '14px', padding: '12px 24px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>
+                    <button
+                        onClick={() => setShowNewGoal(true)}
+                        className="glass"
+                        style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '14px', padding: '12px 24px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.1)' }}
+                    >
                         <Plus size={18} /> Nova Meta
                     </button>
                 )}
@@ -146,20 +143,20 @@ const Goals = () => {
             )}
 
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-                <div style={{ ...cardStyle, background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                <div className="glass" style={{ ...cardContentStyle, background: 'rgba(16, 185, 129, 0.05)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                         <Flame color="#10b981" size={20} />
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>METAS ATIVAS</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#10b981', letterSpacing: '0.05em' }}>METAS ATIVAS</span>
                     </div>
-                    <h4 style={{ fontSize: '24px', fontWeight: 900 }}>{goals.length}</h4>
+                    <div style={{ fontSize: '36px', fontWeight: 900 }}>{goals.length}</div>
                 </div>
-                <div style={{ ...cardStyle, background: 'rgba(239, 68, 68, 0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="glass" style={{ ...cardContentStyle }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                         <TrendingUp color="#ef4444" size={20} />
-                        <span style={{ fontSize: '12px', fontWeight: 800, color: '#ef4444', letterSpacing: '0.05em' }}>TOTAL GUARDADO</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#ef4444', letterSpacing: '0.05em' }}>TOTAL GUARDADO</span>
                     </div>
-                    <h4 style={{ fontSize: '28px', fontWeight: 900 }}>R$ {totalSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
+                    <div style={{ fontSize: '36px', fontWeight: 900 }}>R$ {totalSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 </div>
             </div>
 
@@ -176,7 +173,7 @@ const Goals = () => {
                     const isTransactionActive = activeGoalId === goal.id;
 
                     return (
-                        <div key={goal.id} style={cardStyle}>
+                        <div key={goal.id} className="glass" style={cardContentStyle}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                     <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: `${goal.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

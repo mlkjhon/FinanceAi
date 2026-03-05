@@ -19,7 +19,8 @@
     padding: 0;
     min-height: 100vh;
     width: 100%;
-    background-color: #050505;
+    background-color: #020202;
+    /* Fundo mais profundo que o cinza 050505 */
   }
 
   body {
@@ -31,7 +32,7 @@
     overflow-x: hidden;
   }
 
-  /* Premium Background Aesthetic */
+  /* Premium Background Aesthetic - Mistura de gradientes para dar vida ao site */
   body::before {
     content: '';
     position: fixed;
@@ -40,10 +41,28 @@
     width: 100%;
     height: 100%;
     background:
-      radial-gradient(circle at 50% -20%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 100% 100%, rgba(153, 27, 27, 0.05) 0%, transparent 40%);
+      radial-gradient(circle at 15% 15%, rgba(239, 68, 68, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 85% 85%, rgba(153, 27, 27, 0.04) 0%, transparent 40%),
+      linear-gradient(135deg, #050505 0%, #000000 100%);
     pointer-events: none;
     z-index: -1;
+  }
+
+  /* Glassmorphism Class - Aplicável a cards em todo o site */
+  .glass {
+    background: rgba(255, 255, 255, 0.02) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+    border-radius: 24px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass:hover {
+    border-color: rgba(239, 68, 68, 0.2) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    transform: translateY(-2px);
   }
 
   /* Custom Scrollbar */
@@ -52,11 +71,11 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #000000;
+    background: #000;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #222;
+    background: #1a1a1a;
     border-radius: 10px;
   }
 
@@ -72,9 +91,9 @@
   }
 }
 
-/* Global Smooth Transitions */
+/* Global Transitions and Reset */
 * {
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 input[type="number"]::-webkit-inner-spin-button,

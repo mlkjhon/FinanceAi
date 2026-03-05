@@ -61,12 +61,7 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
     }
   };
 
-  const glassStyle = {
-    background: 'rgba(255, 255, 255, 0.02)',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    borderRadius: '24px',
-  };
+  // O estilo glass agora vem da classe global .glass no index.css
 
   const UserAvatar = () => {
     if (avatarUrl) {
@@ -96,8 +91,9 @@ const Chat = ({ avatarUrl, userName }: ChatProps) => {
       {/* Messages Area */}
       <div
         ref={scrollRef}
+        className="glass"
         style={{
-          ...glassStyle, flex: 1, padding: '32px', overflowY: 'auto',
+          flex: 1, padding: '32px', overflowY: 'auto',
           display: 'flex', flexDirection: 'column', gap: '24px',
           boxShadow: 'inset 0 0 40px rgba(0,0,0,0.2)', scrollBehavior: 'smooth'
         }}

@@ -34,12 +34,7 @@ interface Transaction {
   data: string;
 }
 
-const card = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '20px',
-  padding: '24px',
-};
+// O card padrão agora usa a classe .glass do index.css
 
 const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 const COLORS = ['#ef4444', '#991b1b', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#a78bfa', '#fb923c', '#34d399', '#94a3b8'];
@@ -72,8 +67,8 @@ const CategoryManager = ({ categories, onClose, onRefresh }: {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(32px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div className="glass" style={{ maxWidth: '500px', width: '100%', padding: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Minhas Categorias</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>

@@ -12,9 +12,8 @@ const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const csv = require('csv-parser');
 const xlsx = require('xlsx');
-const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -122,8 +121,12 @@ app.post('/api/auth/register', async (req, res) => {
   }
 
   try {
+    console.log('[Register Attempt]:', { email, nome });
     const existingResult = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
-    if (existingResult.rows.length > 0) return res.status(400).json({ error: 'E-mail já cadastrado' });
+    if (existingResult.rows.length > 0) {
+      console.log('[Register Fail]: E-mail já cadastrado');
+      return res.status(400).json({ error: 'E-mail já cadastrado' });
+    }
 
     const hashedPassword = await hashPassword(password);
     const role = (adminCode === 'ADMIN123') ? 'ADMIN' : 'USER';
@@ -133,21 +136,30 @@ app.post('/api/auth/register', async (req, res) => {
       [nome, email, hashedPassword, role]
     );
     const user = insertResult.rows[0];
+    console.log('[Register Success]:', user.id);
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
     res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone } });
   } catch (err) {
-    console.error('[Register Error]:', err);
-    res.status(500).json({ error: 'Erro ao registrar usuário', details: err.message });
+    console.error('[Register Error FULL]:', err);
+    res.status(500).json({ error: 'Erro ao registrar usuário', details: err.message, stack: err.stack });
   }
 });
 
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
+    console.log('[Login Attempt]:', email);
     const result = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
     const user = result.rows[0];
-    if (!user || !(await comparePassword(password, user.password))) {
+    if (!user) {
+      console.log('[Login Fail]: Usuário não encontrado');
+      return res.status(401).json({ error: 'E-mail ou senha inválidos' });
+    }
+
+    const passMatch = await comparePassword(password, user.password);
+    if (!passMatch) {
+      console.log('[Login Fail]: Senha incorreta');
       return res.status(401).json({ error: 'E-mail ou senha inválidos' });
     }
 

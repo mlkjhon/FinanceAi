@@ -20,7 +20,7 @@ const {
 } = require('./lib/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const multer = require('multer');
-const pdfParse = require('pdf-parse/lib/pdf-parse.js');
+// pdf-parse is lazy-loaded inside the upload endpoint to avoid DOMMatrix crash on startup
 const csv = require('csv-parser');
 const xlsx = require('xlsx');
 
@@ -670,6 +670,7 @@ app.post('/api/upload-extract', authMiddleware, upload.single('file'), async (re
 
   try {
     if (ext === '.pdf') {
+      const pdfParse = require('pdf-parse');
       const dataBuffer = fs.readFileSync(filePath);
       const data = await pdfParse(dataBuffer);
       rawText = data.text;

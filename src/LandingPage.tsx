@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import PhilosopherHead3D from './components/PhilosopherHead3D';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import {
     ShieldCheck,
     MessageSquare,
@@ -107,6 +108,15 @@ const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigi
 const LandingPage = () => {
     const navigate = useNavigate();
 
+    const { scrollYProgress } = useScroll();
+
+    // Parallax effect: image moves up slower than the page
+    const y = useTransform(scrollYProgress, [0, 1], [0, -300]);
+    // Rotation effect: slight rotation as you scroll down
+    const rotate = useTransform(scrollYProgress, [0, 1], [0, -15]);
+    // Opacity: fades out slightly when reaching the end
+    const opacity = useTransform(scrollYProgress, [0, 0.8, 1], [0.9, 0.4, 0]);
+
     const featureCardStyle = {
         background: 'rgba(5, 5, 5, 0.4)',
         backdropFilter: 'blur(20px)',
@@ -137,13 +147,19 @@ const LandingPage = () => {
             position: 'relative'
         }}>
             {/* Premium Philosopher 3D Art */}
-            <div style={{ position: 'fixed', bottom: '-40px', right: '-15%', width: '85%', height: '110vh', zIndex: 0, pointerEvents: 'none', opacity: 0.9 }}>
-                <img
+            <motion.div style={{ position: 'fixed', bottom: '-40px', right: '-15%', width: '85%', height: '110vh', zIndex: 0, pointerEvents: 'none', y, opacity }}>
+                <motion.img
                     src="/hero-3d.png"
                     alt="FinanceAI Philosopher"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 100px rgba(255, 255, 255, 0.05))' }}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 0 100px rgba(255, 255, 255, 0.05))',
+                        rotateZ: rotate
+                    }}
                 />
-            </div>
+            </motion.div>
 
             {/* Foreground Content */}
             <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'auto' }}>

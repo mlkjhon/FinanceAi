@@ -81,9 +81,9 @@ const AdminDashboard = () => {
     const tabStyle = (active: boolean) => ({
         padding: '12px 24px',
         borderRadius: '12px',
-        background: active ? 'rgba(59,130,246,0.1)' : 'transparent',
-        color: active ? '#60a5fa' : 'rgba(255,255,255,0.4)',
-        border: active ? '1px solid rgba(59,130,246,0.2)' : '1px solid transparent',
+        background: active ? 'rgba(239,68,68,0.1)' : 'transparent',
+        color: active ? '#ef4444' : 'rgba(255,255,255,0.4)',
+        border: active ? '1px solid rgba(239,68,68,0.2)' : '1px solid transparent',
         cursor: 'pointer',
         fontWeight: 700,
         fontSize: '14px',
@@ -96,7 +96,7 @@ const AdminDashboard = () => {
         <div style={{ color: 'white', maxWidth: '1200px', margin: '0 auto', paddingBottom: '80px' }}>
             <div className="glass" style={{ padding: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <div style={{ padding: '16px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', borderRadius: '18px', boxShadow: '0 8px 16px rgba(59,130,246,0.3)' }}>
+                    <div style={{ padding: '16px', background: 'linear-gradient(135deg, #ef4444, #8b5cf6)', borderRadius: '18px', boxShadow: '0 8px 16px rgba(239, 68, 68, 0.3)' }}>
                         <ShieldCheck size={32} color="white" />
                     </div>
                     <div>
@@ -115,7 +115,7 @@ const AdminDashboard = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
                         {[
-                            { label: 'Usuários Ativos', value: stats.totalUsers, icon: <Users />, color: '#60a5fa' },
+                            { label: 'Usuários Ativos', value: stats.totalUsers, icon: <Users />, color: '#ef4444' },
                             { label: 'Transações Totais', value: stats.totalTransactions, icon: <BarChart2 />, color: '#10b981' },
                             { label: 'Volume Financeiro', value: stats.totalVolume.toLocaleString('pt-BR'), icon: <DollarSign />, color: '#f59e0b' },
                         ].map((c, i) => (
@@ -129,8 +129,8 @@ const AdminDashboard = () => {
                         ))}
                     </div>
 
-                    <div className="glass" style={{ ...cardContentStyle, height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(59,130,246,0.05)', borderStyle: 'dashed', borderColor: 'rgba(59,130,246,0.3)' }}>
-                        <p style={{ color: 'rgba(59,130,246,0.5)', fontWeight: 700, fontSize: '15px' }}>Análise preditiva e crescimento (Módulo IA em breve)</p>
+                    <div className="glass" style={{ ...cardContentStyle, height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(239,68,68,0.05)', borderStyle: 'dashed', borderColor: 'rgba(239,68,68,0.3)' }}>
+                        <p style={{ color: 'rgba(239,68,68,0.5)', fontWeight: 700, fontSize: '15px' }}>Análise preditiva e crescimento (Módulo IA em breve)</p>
                     </div>
                 </div>
             )}
@@ -201,7 +201,7 @@ const AdminDashboard = () => {
 
             {activeTab === 'categories' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <div className="glass" style={{ ...cardContentStyle, display: 'flex', gap: '16px', alignItems: 'flex-end', background: 'rgba(59,130,246,0.05)' }}>
+                    <div className="glass" style={{ ...cardContentStyle, display: 'flex', gap: '16px', alignItems: 'flex-end', background: 'rgba(239,68,68,0.05)' }}>
                         <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginBottom: '8px', fontWeight: 600 }}>NOVA CATEGORIA GLOBAL</label>
                             <input
@@ -224,7 +224,7 @@ const AdminDashboard = () => {
                         </div>
                         <button
                             onClick={handleAddGlobalCategory}
-                            style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', borderRadius: '12px', padding: '12px 24px', color: 'white', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            style={{ background: 'linear-gradient(135deg, #ef4444, #8b5cf6)', border: 'none', borderRadius: '12px', padding: '12px 24px', color: 'white', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                         >
                             <Plus size={18} /> Adicionar
                         </button>

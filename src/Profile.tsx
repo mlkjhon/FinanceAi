@@ -4,6 +4,8 @@ import {
     User, Mail, Shield, LogOut, Calendar,
     Target, Wallet, Trophy, ArrowLeft, Plus
 } from 'lucide-react';
+import api from './api';
+import { useToast } from './components/Toast';
 
 interface ProfileProps {
     onLogout?: () => void;
@@ -11,6 +13,7 @@ interface ProfileProps {
 
 const Profile = ({ onLogout }: ProfileProps) => {
     const navigate = useNavigate();
+    const { showToast } = useToast();
     const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
@@ -68,24 +71,50 @@ const Profile = ({ onLogout }: ProfileProps) => {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onloadend = async () => {
-            const base64String = reader.result as string;
-            try {
-                // Save locally temporarily for fast UI update
-                const updatedUser = { ...user, avatarUrl: base64String };
-                setUser(updatedUser);
-                localStorage.setItem('user', JSON.stringify(updatedUser));
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 400;
+                const MAX_HEIGHT = 400;
+                let width = img.width;
+                let height = img.height;
 
-                // Send to backend
-                const token = localStorage.getItem('token');
-                await fetch('/api/user/avatar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ avatar: base64String })
-                });
-            } catch (err) {
-                console.error("Failed to update avatar", err);
-            }
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, width, height);
+
+                // Compress to JPEG with 0.8 quality
+                const base64String = canvas.toDataURL('image/jpeg', 0.8);
+
+                try {
+                    // Send to backend via axios to use interceptor automatically
+                    await api.post('/user/avatar', { avatar: base64String });
+
+                    // Save locally only after successful backend update
+                    const updatedUser = { ...user, avatarUrl: base64String };
+                    setUser(updatedUser);
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                    showToast('Sua foto de perfil foi atualizada com sucesso!', 'success');
+                } catch (err: any) {
+                    console.error("Failed to update avatar", err);
+                    showToast(err.response?.data?.error || 'Erro ao atualizar foto. Tente uma imagem diferente.', 'error');
+                }
+            };
+            img.src = event.target?.result as string;
         };
         reader.readAsDataURL(file);
     };

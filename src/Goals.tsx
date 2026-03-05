@@ -98,7 +98,7 @@ const Goals = () => {
 
     const totalSaved = goals.reduce((acc, g) => acc + g.current, 0);
 
-    if (loading) return <div style={{ color: 'white' }}>Carregando metas...</div>;
+    if (loading) return <div style={{ color: 'white', padding: '40px', textAlign: 'center' }}>Carregando metas...</div>;
 
     return (
         <div style={{ color: 'white', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '80px' }}>
@@ -119,7 +119,7 @@ const Goals = () => {
             </div>
 
             {showNewGoal && (
-                <div className="glass" style={{ ...cardContentStyle, border: '1px solid #3b82f6' }}>
+                <div className="glass" style={{ ...cardContentStyle, border: '1px solid #ef4444' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>Criar Nova Meta</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 2fr) minmax(150px, 1fr) auto', gap: '16px', alignItems: 'flex-end' }}>
                         <div>

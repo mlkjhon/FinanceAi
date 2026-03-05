@@ -111,7 +111,7 @@ const Investments = () => {
                 {/* Simulador */}
                 <div style={cardStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-                        <div style={{ padding: '10px', background: 'rgba(59,130,246,0.1)', borderRadius: '12px', color: '#3b82f6' }}>
+                        <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '12px', color: '#ef4444' }}>
                             <Calculator size={24} />
                         </div>
                         <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Simulador de Liberdade</h3>
@@ -157,9 +157,9 @@ const Investments = () => {
                             </div>
                         </div>
 
-                        <div style={{ marginTop: '20px', padding: '24px', background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1))', borderRadius: '20px', border: '1px solid rgba(59,130,246,0.2)' }}>
+                        <div style={{ marginTop: '20px', padding: '24px', background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(0,0,0,0.4))', borderRadius: '20px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>RESULTADO ESTIMADO</p>
-                            <h4 style={{ fontSize: '32px', fontWeight: 900, color: '#60a5fa' }}>R$ {Number(calculateResult()).toLocaleString('pt-BR')}</h4>
+                            <h4 style={{ fontSize: '32px', fontWeight: 900, color: '#f87171' }}>R$ {Number(calculateResult()).toLocaleString('pt-BR')}</h4>
                         </div>
                     </div>
                 </div>
@@ -181,15 +181,15 @@ const Investments = () => {
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             padding: '16px', borderRadius: '16px',
-                                            background: isSelected ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
+                                            background: isSelected ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.02)',
                                             cursor: 'pointer',
-                                            border: isSelected ? '1px solid rgba(59,130,246,0.5)' : '1px solid transparent',
+                                            border: isSelected ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid transparent',
                                             transition: 'all 0.2s'
                                         }}
                                         onMouseEnter={e => {
                                             if (!isSelected) {
                                                 e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                                                e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)';
+                                                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
                                             }
                                         }}
                                         onMouseLeave={e => {
@@ -200,7 +200,7 @@ const Investments = () => {
                                         }}
                                         title="Clique para aplicar no simulador"
                                     >
-                                        <span style={{ fontWeight: 700, color: isSelected ? '#60a5fa' : 'white' }}>{tax.name}</span>
+                                        <span style={{ fontWeight: 700, color: isSelected ? '#f87171' : 'white' }}>{tax.name}</span>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontWeight: 800 }}>{Number(tax.value).toFixed(2)}%</div>
                                             <div style={{ fontSize: '12px', color: tax.trend === 'up' ? '#10b981' : tax.trend === 'down' ? '#ef4444' : '#94a3b8' }}>{tax.change}</div>

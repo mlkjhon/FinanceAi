@@ -473,7 +473,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const result = await model.generateContent(prompt);
-      const text = result.response.text().replace(/```json | ```/g, '').trim();
+      const text = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
       aiResponse = JSON.parse(text);
     } catch (e) {
       console.error('Gemini Error:', e);
@@ -531,6 +531,19 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
         newVal = Math.max(0, Math.min(newVal, targetGoal.target));
 
         await db.query('UPDATE "Goal" SET current = $1 WHERE id = $2', [newVal, targetGoal.id]);
+
+        try {
+          const transTipo = aiResponse.acao === 'adicionar' ? 'gasto' : 'ganho';
+          const transDesc = aiResponse.acao === 'adicionar' ? `Depósito na meta: ${targetGoal.name}` : `Resgate da meta: ${targetGoal.name}`;
+          const cat = await ensureCategory('Metas', transTipo, req.user.id);
+          const dataHoje = new Date().toISOString().split('T')[0];
+          await db.query(
+            'INSERT INTO "Transaction" (tipo, valor, categoriaid, descricao, data, userid) VALUES ($1, $2, $3, $4, $5, $6)',
+            [transTipo, aiResponse.valor, cat.id, transDesc, dataHoje, req.user.id]
+          );
+        } catch (e) {
+          console.error('Erro ao registrar transação da meta:', e);
+        }
 
         // Notificação de meta concluída
         if (newVal >= targetGoal.target) {

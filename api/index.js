@@ -54,15 +54,21 @@ const KEYWORD_MAP = [
 
 // Helper para tratar valores em texto (mil, milhão, bilhão)
 function parseMoney(text) {
-  const lower = text.toLowerCase().replace(/r\$/g, '').trim();
+  const lower = text.toLowerCase().replace(/r\$/g, '').replace(/,/g, '.').trim();
   let multiplier = 1;
-  if (/bilh[ão]o|bilh[õo]es| bi /i.test(lower)) multiplier = 1000000000;
-  else if (/milh[ão]o|milh[õo]es| mi /i.test(lower)) multiplier = 1000000;
-  else if (/ mil /i.test(lower)) multiplier = 1000;
 
-  const match = lower.match(/[\d.]+(?:[.,]\d+)?/);
-  if (!match) return 0;
-  const val = parseFloat(match[0].replace(/\./g, '').replace(',', '.'));
+  if (/\bbilh[ão]o\b|\bbilh[õo]es\b|\bbi\b/i.test(lower)) multiplier = 1000000000;
+  else if (/\bmilh[ão]o\b|\bmilh[õo]es\b|\bmi\b/i.test(lower)) multiplier = 1000000;
+  else if (/\bmil\b/i.test(lower)) multiplier = 1000;
+
+  const match = lower.match(/[\d.]+/);
+  if (!match) {
+    // Se não tem dígitos mas tem 'mil', assume 1 mil
+    if (multiplier > 1) return multiplier;
+    return 0;
+  }
+
+  const val = parseFloat(match[0]);
   return val * multiplier;
 }
 
@@ -371,25 +377,32 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       ? goalsResult.rows.map(g => `- "${g.name}": R$ ${g.current?.toFixed(2)} / R$ ${g.target?.toFixed(2)}`).join('\n')
       : '(sem metas cadastradas)';
 
-    const prompt = `${historyText}\n\nMentor: Olá, ${user.nome}! Percebi que você está com o objetivo de ${onboarding.objective || 'se organizar'}. 
-    Analisei seu perfil ${onboarding.profile} e suas metas atuais.
-    Suas últimas transações: ${transContext}
-    Metas: ${goalsContext}
-    
-    AÇÕES DISPONÍVEIS:
-    - criar_meta (nome, valor_alvo)
-    - listar_metas
-    - meta (acao: adicionar|remover, valor, meta)
-    - gasto (valor, categoria, descricao, data)
-    - ganho (valor, categoria, descricao, data)
-    - dashboard_resumo
-    - social_buscar (nome)
-    - social_seguir (nome)
-    - conversa (resposta)
+    const prompt = `Você é o Mentor Financeiro da FinanceAI. Seu objetivo é ajudar o usuário a gerir finanças de forma inteligente e motivadora.
+    O usuário disse: "${message}"
 
-    Responda APENAS com um JSON puro contendo o campo "tipo" e os parâmetros da ação.
-    Para valores em "milhão" ou "bilhão", converta para número puro.
-    Se o usuário quiser adicionar dinheiro a uma meta, use o tipo "meta" com acao "adicionar".
+    CONTEXTO DO USUÁRIO:
+    - Nome: ${user.nome}
+    - Perfil: ${onboarding.profile} (Objetivo: ${onboarding.objective})
+    - Categorias Disponíveis: ${catList}
+
+    STATUS ATUAL:
+    - Metas: ${goalsContext}
+    - Últimas Transações: ${transContext}
+    - Histórico do Chat:
+    ${historyText}
+
+    TAREFA: Analise a frase e determine a intenção correta de acordo com as seguintes ações:
+    1. Registrar Gasto/Ganho: { "tipo": "gasto" | "ganho", "valor": number, "categoria": string, "descricao": string }
+    2. Criar Meta: { "tipo": "criar_meta", "nome": string, "valor_alvo": number }
+    3. Movimentar Meta: { "tipo": "meta", "acao": "adicionar", "valor": number, "meta": string }
+    4. Resumo: { "tipo": "dashboard_resumo" }
+    5. Social: { "tipo": "social_buscar" | "social_seguir", "nome": string }
+    6. Conversa/Dica: { "tipo": "conversa", "resposta": string } (Seja empático e dê dicas úteis)
+
+    REGRAS CRÍTICAS:
+    - Extraia o valor numérico mesmo se estiver por extenso (ex: "mil" = 1000).
+    - Para gastos/ganhos, use preferencialmente uma das categorias disponíveis: ${catList}.
+    - Responda EXCLUSIVAMENTE com o objeto JSON puro, sem textos adicionais.
 
     Pergunta do Usuário: "${message}"`;
 

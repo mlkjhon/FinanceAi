@@ -129,21 +129,37 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
 
             {showNotifications && (
               <div style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: '12px', width: '300px',
-                background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 200, padding: '12px'
+                position: 'absolute', top: '100%', right: 0, marginTop: '16px', width: '340px',
+                background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 20px rgba(59,130,246,0.1)', zIndex: 200, padding: '16px',
+                animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span style={{ fontWeight: 700, fontSize: '14px' }}>Notificações</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <span style={{ fontWeight: 800, fontSize: '15px', letterSpacing: '-0.01em' }}>Notificações</span>
+                  {unreadCount > 0 && <span style={{ fontSize: '10px', background: 'rgba(59,130,246,0.2)', color: '#60a5fa', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>{unreadCount} novas</span>}
                 </div>
-                <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                <div style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
                   {notifications.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Nenhuma notificação por enquanto</div>
+                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                      <div style={{ opacity: 0.2, marginBottom: '12px' }}><Bell size={32} style={{ margin: '0 auto' }} /></div>
+                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', margin: 0 }}>Sua caixa de entrada está vazia</p>
+                    </div>
                   ) : (
                     notifications.map(n => (
-                      <div key={n.id} style={{ padding: '10px', borderRadius: '8px', background: n.lida ? 'transparent' : 'rgba(59,130,246,0.05)', marginBottom: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                        <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.9)' }}>{n.mensagem}</p>
-                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>{new Date(n.createdAt).toLocaleTimeString()}</span>
+                      <div key={n.id} style={{
+                        padding: '12px 14px', borderRadius: '12px',
+                        background: n.lida ? 'rgba(255,255,255,0.02)' : 'rgba(59,130,246,0.08)',
+                        marginBottom: '8px', border: n.lida ? '1px solid transparent' : '1px solid rgba(59,130,246,0.15)',
+                        transition: 'all 0.2s', cursor: 'default'
+                      }}>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                          <div style={{ width: '8px', height: '8px', background: n.lida ? 'transparent' : '#3b82f6', borderRadius: '50%', marginTop: '5px', flexShrink: 0 }} />
+                          <div style={{ flex: 1 }}>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.4' }}>{n.mensagem}</p>
+                            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', display: 'block', fontWeight: 500 }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • Justo agora</span>
+                          </div>
+                        </div>
                       </div>
                     ))
                   )}
@@ -243,7 +259,43 @@ const App = () => {
   };
 
   if (loading) {
-    return <div style={{ minHeight: '100vh', background: '#0a0e1a', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Carregando FinanceAI...</div>;
+    return (
+      <div style={{
+        minHeight: '100vh', background: '#0a0e1a', color: 'white',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        gap: '24px', fontFamily: "'Inter', sans-serif"
+      }}>
+        <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: '3px solid rgba(59,130,246,0.1)', borderTopColor: '#3b82f6',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <div style={{
+            position: 'absolute', inset: '8px', borderRadius: '50%',
+            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 20px rgba(59,130,246,0.3)',
+            animation: 'pulse 2s infinite'
+          }}>
+            <ShieldCheck size={32} color="white" />
+          </div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
+            Finance<span style={{ color: '#60a5fa' }}>AI</span>
+          </h2>
+          <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            Preparando seu ambiente seguro...
+          </p>
+        </div>
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes pulse { 0% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.8; transform: scale(1); } }
+          @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        `}</style>
+      </div>
+    );
   }
 
   return (

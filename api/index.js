@@ -20,7 +20,7 @@ const {
 } = require('./lib/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const multer = require('multer');
-const pdfParse = require('pdf-parse');
+const pdfParse = require('pdf-parse/lib/pdf-parse.js');
 const csv = require('csv-parser');
 const xlsx = require('xlsx');
 

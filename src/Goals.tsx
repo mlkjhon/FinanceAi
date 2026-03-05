@@ -60,7 +60,7 @@ const Goals = () => {
                 name: newGoalName,
                 target: targetNum,
                 current: 0,
-                color: '#3b82f6',
+                color: '#ef4444',
                 icon: 'Target'
             });
             setShowNewGoal(false);
@@ -115,7 +115,7 @@ const Goals = () => {
                     <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px' }}>Defina seus objetivos e acompanhe sua evolução.</p>
                 </div>
                 {!showNewGoal && (
-                    <button onClick={() => setShowNewGoal(true)} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '14px', padding: '12px 20px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <button onClick={() => setShowNewGoal(true)} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '14px', padding: '12px 24px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>
                         <Plus size={18} /> Nova Meta
                     </button>
                 )}
@@ -137,8 +137,8 @@ const Goals = () => {
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={handleCreateGoal} style={{ padding: '14px 24px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Salvar</button>
-                            <button onClick={() => { setShowNewGoal(false); setGoalError(''); }} style={{ padding: '14px 24px', background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancelar</button>
+                            <button onClick={handleCreateGoal} style={{ padding: '14px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Salvar Meta</button>
+                            <button onClick={() => { setShowNewGoal(false); setGoalError(''); }} style={{ padding: '14px 24px', background: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancelar</button>
                         </div>
                     </div>
                     {goalError && <p style={{ marginTop: '12px', color: '#f87171', fontSize: '13px', fontWeight: 600 }}>⚠ {goalError}</p>}
@@ -154,12 +154,12 @@ const Goals = () => {
                     </div>
                     <h4 style={{ fontSize: '24px', fontWeight: 900 }}>{goals.length}</h4>
                 </div>
-                <div style={cardStyle}>
+                <div style={{ ...cardStyle, background: 'rgba(239, 68, 68, 0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                        <TrendingUp color="#3b82f6" size={20} />
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#3b82f6' }}>TOTAL GUARDADO</span>
+                        <TrendingUp color="#ef4444" size={20} />
+                        <span style={{ fontSize: '12px', fontWeight: 800, color: '#ef4444', letterSpacing: '0.05em' }}>TOTAL GUARDADO</span>
                     </div>
-                    <h4 style={{ fontSize: '24px', fontWeight: 900 }}>R$ {totalSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
+                    <h4 style={{ fontSize: '28px', fontWeight: 900 }}>R$ {totalSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
                 </div>
             </div>
 

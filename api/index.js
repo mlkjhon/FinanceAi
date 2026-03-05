@@ -26,7 +26,7 @@ const xlsx = require('xlsx');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const upload = multer({ dest: '/tmp/' });
+const upload = multer({ storage: multer.memoryStorage() });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Proteção Básica de Headers
@@ -355,11 +355,32 @@ app.put('/api/goals/:id', authMiddleware, async (req, res) => {
   const { current, name, target, color, icon } = req.body;
   const id = parseInt(req.params.id);
   try {
+    // Buscar valor atual antes do update para registrar transação se o saldo mudou
+    const oldGoalResult = await db.query('SELECT current, name FROM "Goal" WHERE id = $1 AND userid = $2', [id, req.user.id]);
+    const oldGoal = oldGoalResult.rows[0];
+
     const result = await db.query(
       'UPDATE "Goal" SET current = COALESCE($1, current), name = COALESCE($2, name), target = COALESCE($3, target), color = COALESCE($4, color), icon = COALESCE($5, icon) WHERE id = $6 AND userid = $7 RETURNING *',
       [current, name, target, color, icon, id, req.user.id]
     );
-    res.json(result.rows[0]);
+    const updatedGoal = result.rows[0];
+
+    // Se o valor de 'current' mudou manualmente pela UI, registrar transação
+    if (oldGoal && current !== undefined && Number(current) !== Number(oldGoal.current)) {
+      const diff = Number(current) - Number(oldGoal.current);
+      const isAddition = diff > 0;
+      const transTipo = isAddition ? 'gasto' : 'ganho'; // Colocar na meta = gasta do saldo, Tirar da meta = ganha no saldo
+      const transDesc = isAddition ? `Depósito manual na meta: ${updatedGoal.name}` : `Resgate manual na meta: ${updatedGoal.name}`;
+      const cat = await ensureCategory('Metas', transTipo, req.user.id);
+      const dataHoje = new Date().toISOString().split('T')[0];
+
+      await db.query(
+        'INSERT INTO "Transaction" (tipo, valor, categoriaid, descricao, data, userid) VALUES ($1, $2, $3, $4, $5, $6)',
+        [transTipo, Math.abs(diff), cat.id, transDesc, dataHoje, req.user.id]
+      );
+    }
+
+    res.json(updatedGoal);
   } catch (e) {
     console.error('[PUT /goals]', e);
     res.status(500).json({ error: 'Erro ao atualizar meta' });
@@ -684,20 +705,20 @@ app.post('/api/upload-extract', authMiddleware, upload.single('file'), async (re
   try {
     if (ext === '.pdf') {
       const pdfParse = require('pdf-parse');
-      const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdfParse(dataBuffer);
+      const data = await pdfParse(req.file.buffer);
       rawText = data.text;
     } else if (ext === '.csv') {
+      const { Readable } = require('stream');
       rawText = await new Promise((resolve, reject) => {
         const results = [];
-        fs.createReadStream(filePath)
-          .pipe(csv())
+        const stream = Readable.from(req.file.buffer.toString());
+        stream.pipe(csv())
           .on('data', (data) => results.push(JSON.stringify(data)))
           .on('end', () => resolve(results.join('\n')))
           .on('error', reject);
       });
     } else if (ext === '.xlsx' || ext === '.xls') {
-      const workbook = xlsx.readFile(filePath);
+      const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const rows = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
       rawText = rows;
@@ -706,8 +727,10 @@ app.post('/api/upload-extract', authMiddleware, upload.single('file'), async (re
       return res.status(400).json({ error: 'Formato de arquivo não suportado. Envie .pdf, .csv ou .xlsx' });
     }
 
-    // Limpar arquivo temporário
-    fs.unlinkSync(filePath);
+    // Limpar arquivo temporário se existir (para compatibilidade caso multer mude)
+    if (req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
 
     if (!rawText || rawText.trim().length === 0) {
       return res.status(400).json({ error: 'Não foi possível extrair texto do arquivo.' });

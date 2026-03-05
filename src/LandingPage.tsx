@@ -136,15 +136,13 @@ const LandingPage = () => {
             overflowX: 'hidden',
             position: 'relative'
         }}>
-            {/* 3D Canvas Background fixed behind everything */}
-            <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 0, pointerEvents: 'none' }}>
-                <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-                    <ambientLight intensity={0.5} />
-                    <directionalLight position={[10, 10, 5]} intensity={1} color="#ffffff" />
-                    <spotLight position={[-10, 10, 10]} intensity={2} color="#ef4444" />
-                    <spotLight position={[10, -10, -10]} intensity={1} color="#991b1b" />
-                    <PhilosopherHead3D />
-                </Canvas>
+            {/* 3D Background replaced by Premium Hero Art */}
+            <div style={{ position: 'fixed', top: 0, right: '-5%', width: '60%', height: '100vh', zIndex: 0, pointerEvents: 'none', opacity: 0.6 }}>
+                <img
+                    src="/hero-3d.png"
+                    alt="FinanceAI Premium Art"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 0 50px rgba(239, 68, 68, 0.2))' }}
+                />
             </div>
 
             {/* Foreground Content */}
@@ -326,6 +324,8 @@ const LandingPage = () => {
             <style>{`
                 @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
                 @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+                #features { position: relative; z-index: 10; }
+                section { position: relative; z-index: 10; }
             `}</style>
         </div>
     );

@@ -230,9 +230,9 @@ const Investments = () => {
             {/* Modal "Ver Todas as Taxas" */}
             {showAllRates && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '32px' }}>
+                    <div style={{ background: '#050505', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '24px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', backdropFilter: 'blur(32px)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '24px', fontWeight: 800 }}>Biblioteca de Taxas</h2>
+                            <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#ef4444' }}>Biblioteca de Taxas</h2>
                             <button onClick={() => setShowAllRates(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: '8px', cursor: 'pointer', borderRadius: '50%', color: 'white', display: 'flex' }}><X size={20} /></button>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
@@ -248,11 +248,11 @@ const Investments = () => {
                                         }}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '16px',
-                                            background: isSelected ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
-                                            cursor: 'pointer', border: isSelected ? '1px solid rgba(59,130,246,0.5)' : '1px solid transparent', transition: 'all 0.2s'
+                                            background: isSelected ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                                            cursor: 'pointer', border: isSelected ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid transparent', transition: 'all 0.2s'
                                         }}
                                     >
-                                        <span style={{ fontWeight: 700, color: isSelected ? '#60a5fa' : 'white' }}>{tax.name}</span>
+                                        <span style={{ fontWeight: 700, color: isSelected ? '#f87171' : 'white' }}>{tax.name}</span>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontWeight: 800 }}>{Number(tax.value).toFixed(2)}%</div>
                                         </div>

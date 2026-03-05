@@ -153,7 +153,7 @@ app.get('/api/me', authMiddleware, async (req, res) => {
     const result = await db.query('SELECT * FROM "User" WHERE id = $1', [req.user.id]);
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
-    res.json({ ...req.user, onboardingDone: user.onboardingdone, onboardingData: user.onboardingdata ? JSON.parse(user.onboardingdata) : null, avatarUrl: user.avatarurl });
+    res.json({ ...req.user, onboardingDone: user.onboardingData, onboardingData: user.onboardingData ? JSON.parse(user.onboardingData) : null, avatarUrl: user.avatarUrl });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao validar sessão' });
   }
@@ -343,7 +343,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     const userResult = await db.query('SELECT * FROM "User" WHERE id = $1', [req.user.id]);
     const user = userResult.rows[0];
     if (!user) return res.status(401).json({ error: 'Usuário não encontrado ou sessão expirada' });
-    const onboarding = user.onboardingdata ? JSON.parse(user.onboardingdata) : {};
+    const onboarding = user.onboardingData ? JSON.parse(user.onboardingData) : {};
 
     const catResult = await db.query('SELECT nome FROM "Category" WHERE "userId" IS NULL OR "userId" = $1', [req.user.id]);
     const catList = catResult.rows.map(c => c.nome).join(', ');
@@ -359,7 +359,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
        FROM "Transaction" t 
        LEFT JOIN "Category" c ON t."categoriaId" = c.id 
        WHERE t."userId" = $1 
-       ORDER BY t.createdAt DESC LIMIT 3`,
+       ORDER BY t."createdAt" DESC LIMIT 3`,
       [req.user.id]
     );
     const transContext = transResult.rows.length > 0
@@ -477,9 +477,10 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     // ── Registrar gasto/ganho ─────────────────────────────────────────────────
     if (aiResponse.tipo === 'gasto' || aiResponse.tipo === 'ganho') {
       const cat = await ensureCategory(aiResponse.categoria, aiResponse.tipo, req.user.id);
+      const todayDate = new Date().toISOString().split('T')[0];
       const insert = await db.query(
         'INSERT INTO "Transaction" (tipo, valor, "categoriaId", descricao, data, "userId") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [aiResponse.tipo, aiResponse.valor, cat.id, aiResponse.descricao || message, aiResponse.data || today, req.user.id]
+        [aiResponse.tipo, aiResponse.valor, cat.id, aiResponse.descricao || message, aiResponse.data || todayDate, req.user.id]
       );
       const trans = insert.rows[0];
       const emoji = aiResponse.tipo === 'gasto' ? '💸' : '💰';

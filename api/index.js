@@ -1,5 +1,13 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Unhandled Rejection]:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[Uncaught Exception]:', err);
+});
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -193,7 +201,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error('[Login Error]:', err);
-    res.status(500).json({ error: 'Erro ao fazer login', details: err.message });
+    res.status(500).json({ error: 'Erro ao fazer login', details: err.message, stack: err.stack });
   }
 });
 
@@ -972,6 +980,13 @@ function fallbackParser(text) {
   }
   return { tipo, valor, categoria: tipo === 'ganho' ? 'Renda' : 'Outros', descricao: text, data: new Date().toISOString().split('T')[0] };
 }
+
+// Error Handler Middleware
+app.use((err, req, res, next) => {
+  console.error('[Express Global Error]:', err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Erro interno no servidor', details: err.message });
+});
 
 app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
 

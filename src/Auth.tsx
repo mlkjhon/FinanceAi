@@ -22,19 +22,17 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
             localStorage.setItem('token', data.token);
             onLogin(data.user);
         } catch (err: any) {
+            console.error('[Auth Exception]:', err);
             const errResponse = err.response?.data;
-            if (errResponse) {
-                if (typeof errResponse.error === 'string') {
-                    setError(errResponse.error);
-                } else if (typeof errResponse.error === 'object' && errResponse.error.message) {
-                    setError(errResponse.error.message);
-                } else if (typeof errResponse === 'string') {
-                    setError(errResponse);
-                } else {
-                    setError('Erro na autenticação. Verifique os dados ou tente novamente mais tarde.');
-                }
+
+            if (err.code === 'ERR_NETWORK') {
+                setError('Erro de conexão: Verifique se o servidor backend está rodando na porta 5000.');
+            } else if (errResponse) {
+                const msg = typeof errResponse.error === 'string' ? errResponse.error :
+                    (errResponse.details || errResponse.message || 'Erro inesperado no servidor.');
+                setError(msg);
             } else {
-                setError('Erro na autenticação. Servidor indisponível.');
+                setError('Erro na autenticação. Status: ' + (err.response?.status || 'Desconhecido'));
             }
         } finally {
             setLoading(false);

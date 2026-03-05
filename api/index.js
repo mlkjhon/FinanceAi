@@ -70,13 +70,13 @@ function parseMoney(text) {
 // Helper para garantir categoria (busca global ou do usuário)
 async function ensureCategory(nome, tipo, userId) {
   let result = await db.query(
-    'SELECT * FROM "Category" WHERE nome = $1 AND ("userId" IS NULL OR "userId" = $2)',
+    'SELECT * FROM "Category" WHERE nome = $1 AND (userid IS NULL OR userid = $2)',
     [nome, userId]
   );
   let cat = result.rows[0];
   if (!cat) {
     const insert = await db.query(
-      'INSERT INTO "Category" (nome, tipo, "userId") VALUES ($1, $2, $3) RETURNING *',
+      'INSERT INTO "Category" (nome, tipo, userid) VALUES ($1, $2, $3) RETURNING *',
       [nome, tipo, userId]
     );
     cat = insert.rows[0];
@@ -139,7 +139,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     }
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
-    res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingDone, onboardingData: user.onboardingData ? JSON.parse(user.onboardingData) : null, avatarUrl: user.avatarUrl } });
+    res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone, onboardingData: user.onboardingdata ? JSON.parse(user.onboardingdata) : null, avatarUrl: user.avatarurl } });
   } catch (err) {
     console.error('[Login Error]:', err);
     res.status(500).json({ error: 'Erro ao fazer login', details: err.message });
@@ -153,7 +153,7 @@ app.get('/api/me', authMiddleware, async (req, res) => {
     const result = await db.query('SELECT * FROM "User" WHERE id = $1', [req.user.id]);
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'Usuário não encontrado' });
-    res.json({ ...req.user, onboardingDone: user.onboardingData, onboardingData: user.onboardingData ? JSON.parse(user.onboardingData) : null, avatarUrl: user.avatarUrl });
+    res.json({ ...req.user, onboardingDone: user.onboardingdone, onboardingData: user.onboardingdata ? JSON.parse(user.onboardingdata) : null, avatarUrl: user.avatarurl });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao validar sessão' });
   }
@@ -167,7 +167,7 @@ app.post('/api/user/avatar', authMiddleware, async (req, res) => {
   if (avatar.length > 5000000) return res.status(413).json({ error: 'Imagem muito grande' });
 
   await db.query(
-    'UPDATE "User" SET "avatarUrl" = $1 WHERE id = $2',
+    'UPDATE "User" SET avatarurl = $1 WHERE id = $2',
     [avatar, req.user.id]
   );
   res.json({ success: true, avatarUrl: avatar });
@@ -177,7 +177,7 @@ app.post('/api/user/onboarding', authMiddleware, async (req, res) => {
   const { onboardingData } = req.body;
   try {
     await db.query(
-      'UPDATE "User" SET "onboardingDone" = TRUE, "onboardingData" = $1 WHERE id = $2',
+      'UPDATE "User" SET onboardingdone = TRUE, onboardingdata = $1 WHERE id = $2',
       [JSON.stringify(onboardingData), req.user.id]
     );
     res.json({ success: true });
@@ -191,7 +191,7 @@ app.post('/api/user/onboarding', authMiddleware, async (req, res) => {
 
 app.get('/api/categories', authMiddleware, async (req, res) => {
   const result = await db.query(
-    'SELECT * FROM "Category" WHERE "userId" IS NULL OR "userId" = $1 ORDER BY nome ASC',
+    'SELECT * FROM "Category" WHERE userid IS NULL OR userid = $1 ORDER BY nome ASC',
     [req.user.id]
   );
   res.json(result.rows);
@@ -200,13 +200,13 @@ app.get('/api/categories', authMiddleware, async (req, res) => {
 app.post('/api/categories', authMiddleware, async (req, res) => {
   const { nome, tipo } = req.body;
   const existing = await db.query(
-    'SELECT * FROM "Category" WHERE nome = $1 AND "userId" = $2',
+    'SELECT * FROM "Category" WHERE nome = $1 AND userid = $2',
     [nome, req.user.id]
   );
   if (existing.rows.length > 0) return res.status(400).json({ error: 'Categoria já existe' });
 
   const result = await db.query(
-    'INSERT INTO "Category" (nome, tipo, "userId") VALUES ($1, $2, $3) RETURNING *',
+    'INSERT INTO "Category" (nome, tipo, userid) VALUES ($1, $2, $3) RETURNING *',
     [nome, tipo, req.user.id]
   );
   res.json(result.rows[0]);
@@ -221,7 +221,7 @@ app.delete('/api/categories/:id', authMiddleware, async (req, res) => {
   // Mover transações para 'Outros' antes de deletar
   const outros = await ensureCategory('Outros', cat.tipo, null);
   await db.query(
-    'UPDATE "Transaction" SET "categoriaId" = $1 WHERE "categoriaId" = $2 AND "userId" = $3',
+    'UPDATE "Transaction" SET categoriaid = $1 WHERE categoriaid = $2 AND userid = $3',
     [outros.id, id, req.user.id]
   );
 
@@ -235,8 +235,8 @@ app.get('/api/transactions', authMiddleware, async (req, res) => {
   const result = await db.query(
     `SELECT t.*, c.nome as categoria_nome, c.tipo as categoria_tipo 
      FROM "Transaction" t 
-     LEFT JOIN "Category" c ON t."categoriaId" = c.id 
-     WHERE t."userId" = $1 
+     LEFT JOIN "Category" c ON t.categoriaid = c.id 
+     WHERE t.userid = $1 
      ORDER BY t.data DESC`,
     [req.user.id]
   );
@@ -253,21 +253,21 @@ app.put('/api/transactions/:id', authMiddleware, async (req, res) => {
   const id = parseInt(req.params.id);
 
   const result = await db.query(
-    'UPDATE "Transaction" SET valor = $1, descricao = $2, data = $3, "categoriaId" = $4, tipo = $5 WHERE id = $6 AND "userId" = $7 RETURNING *',
+    'UPDATE "Transaction" SET valor = $1, descricao = $2, data = $3, categoriaid = $4, tipo = $5 WHERE id = $6 AND userid = $7 RETURNING *',
     [valor, descricao, data, categoriaId, tipo, id, req.user.id]
   );
   res.json(result.rows[0]);
 });
 
 app.delete('/api/transactions/:id', authMiddleware, async (req, res) => {
-  await db.query('DELETE FROM "Transaction" WHERE id = $1 AND "userId" = $2', [parseInt(req.params.id), req.user.id]);
+  await db.query('DELETE FROM "Transaction" WHERE id = $1 AND userid = $2', [parseInt(req.params.id), req.user.id]);
   res.json({ success: true });
 });
 
 // ─── Goals Routes ────────────────────────────────────────────────────────────
 
 app.get('/api/goals', authMiddleware, async (req, res) => {
-  const result = await db.query('SELECT * FROM "Goal" WHERE "userId" = $1', [req.user.id]);
+  const result = await db.query('SELECT * FROM "Goal" WHERE userid = $1', [req.user.id]);
   res.json(result.rows);
 });
 
@@ -276,7 +276,7 @@ app.post('/api/goals', authMiddleware, async (req, res) => {
   if (!name || target === undefined) return res.status(400).json({ error: 'Nome e valor alvo são obrigatórios' });
   try {
     const result = await db.query(
-      'INSERT INTO "Goal" (name, target, current, color, icon, "userId") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      'INSERT INTO "Goal" (name, target, current, color, icon, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [name, Number(target), Number(current) || 0, color || '#3b82f6', icon || 'Target', req.user.id]
     );
     res.json(result.rows[0]);
@@ -291,7 +291,7 @@ app.put('/api/goals/:id', authMiddleware, async (req, res) => {
   const id = parseInt(req.params.id);
   try {
     const result = await db.query(
-      'UPDATE "Goal" SET current = COALESCE($1, current), name = COALESCE($2, name), target = COALESCE($3, target), color = COALESCE($4, color), icon = COALESCE($5, icon) WHERE id = $6 AND "userId" = $7 RETURNING *',
+      'UPDATE "Goal" SET current = COALESCE($1, current), name = COALESCE($2, name), target = COALESCE($3, target), color = COALESCE($4, color), icon = COALESCE($5, icon) WHERE id = $6 AND userid = $7 RETURNING *',
       [current, name, target, color, icon, id, req.user.id]
     );
     res.json(result.rows[0]);
@@ -303,7 +303,7 @@ app.put('/api/goals/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/goals/:id', authMiddleware, async (req, res) => {
   try {
-    await db.query('DELETE FROM "Goal" WHERE id = $1 AND "userId" = $2', [parseInt(req.params.id), req.user.id]);
+    await db.query('DELETE FROM "Goal" WHERE id = $1 AND userid = $2', [parseInt(req.params.id), req.user.id]);
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Erro ao deletar meta' });
@@ -314,7 +314,7 @@ app.delete('/api/goals/:id', authMiddleware, async (req, res) => {
 
 app.get('/api/notifications', authMiddleware, async (req, res) => {
   const result = await db.query(
-    'SELECT * FROM "Notification" WHERE "userId" = $1 ORDER BY "createdAt" DESC LIMIT 20',
+    'SELECT * FROM "Notification" WHERE userid = $1 ORDER BY createdat DESC LIMIT 20',
     [req.user.id]
   );
   res.json(result.rows);
@@ -322,7 +322,7 @@ app.get('/api/notifications', authMiddleware, async (req, res) => {
 
 app.put('/api/notifications/read-all', authMiddleware, async (req, res) => {
   await db.query(
-    'UPDATE "Notification" SET lida = TRUE WHERE "userId" = $1 AND lida = FALSE',
+    'UPDATE "Notification" SET lida = TRUE WHERE userid = $1 AND lida = FALSE',
     [req.user.id]
   );
   res.json({ success: true });
@@ -335,7 +335,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
   if (!message) return res.status(400).json({ error: 'Mensagem é obrigatória' });
 
   await db.query(
-    'INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)',
+    'INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)',
     [message, 'user', req.user.id]
   );
 
@@ -343,13 +343,13 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     const userResult = await db.query('SELECT * FROM "User" WHERE id = $1', [req.user.id]);
     const user = userResult.rows[0];
     if (!user) return res.status(401).json({ error: 'Usuário não encontrado ou sessão expirada' });
-    const onboarding = user.onboardingData ? JSON.parse(user.onboardingData) : {};
+    const onboarding = user.onboardingdata ? JSON.parse(user.onboardingdata) : {};
 
-    const catResult = await db.query('SELECT nome FROM "Category" WHERE "userId" IS NULL OR "userId" = $1', [req.user.id]);
+    const catResult = await db.query('SELECT nome FROM "Category" WHERE userid IS NULL OR userid = $1', [req.user.id]);
     const catList = catResult.rows.map(c => c.nome).join(', ');
 
     const histResult = await db.query(
-      'SELECT * FROM "ChatMessage" WHERE "userId" = $1 ORDER BY "createdAt" DESC LIMIT 8',
+      'SELECT * FROM "ChatMessage" WHERE userid = $1 ORDER BY createdat DESC LIMIT 8',
       [req.user.id]
     );
     const historyText = histResult.rows.reverse().map(m => `${m.sender === 'user' ? user.nome : 'Mentor'}: ${m.texto}`).join('\n');
@@ -357,16 +357,16 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     const transResult = await db.query(
       `SELECT t.*, c.nome as categoria_nome 
        FROM "Transaction" t 
-       LEFT JOIN "Category" c ON t."categoriaId" = c.id 
-       WHERE t."userId" = $1 
-       ORDER BY t."createdAt" DESC LIMIT 3`,
+       LEFT JOIN "Category" c ON t.categoriaid = c.id 
+       WHERE t.userid = $1 
+       ORDER BY t.createdat DESC LIMIT 3`,
       [req.user.id]
     );
     const transContext = transResult.rows.length > 0
       ? transResult.rows.map(t => `- ${t.tipo === 'gasto' ? '💸 Gastou' : '💰 Ganhou'} R$${t.valor} em ${t.categoria_nome} (${t.data})`).join('\n')
       : '(Nenhuma transação recente)';
 
-    const goalsResult = await db.query('SELECT * FROM "Goal" WHERE "userId" = $1', [req.user.id]);
+    const goalsResult = await db.query('SELECT * FROM "Goal" WHERE userid = $1', [req.user.id]);
     const goalsContext = goalsResult.rows.length > 0
       ? goalsResult.rows.map(g => `- "${g.name}": R$ ${g.current?.toFixed(2)} / R$ ${g.target?.toFixed(2)}`).join('\n')
       : '(sem metas cadastradas)';
@@ -410,7 +410,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       const valorAlvo = Number(aiResponse.valor_alvo) || 0;
       if (valorAlvo > 0) {
         const insert = await db.query(
-          'INSERT INTO "Goal" (name, target, current, color, icon, "userId") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+          'INSERT INTO "Goal" (name, target, current, color, icon, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
           [nomeMeta, valorAlvo, 0, '#3b82f6', 'Target', req.user.id]
         );
         const novaMeta = insert.rows[0];
@@ -426,7 +426,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
     // ── Listar metas ─────────────────────────────────────────────────────────
     if (aiResponse.tipo === 'listar_metas') {
-      const goalsResult = await db.query('SELECT * FROM "Goal" WHERE "userId" = $1', [req.user.id]);
+      const goalsResult = await db.query('SELECT * FROM "Goal" WHERE userid = $1', [req.user.id]);
       const metas = goalsResult.rows;
       if (metas.length === 0) {
         const botMsg = `Você ainda não tem metas cadastradas. Quer criar uma agora? Diga algo como "cria uma meta de viagem de R$ 5.000"!`;
@@ -442,7 +442,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
     // ── Movimentar meta existente ────────────────────────────────────────────
     if (aiResponse.tipo === 'meta') {
-      const metasResult = await db.query('SELECT * FROM "Goal" WHERE "userId" = $1', [req.user.id]);
+      const metasResult = await db.query('SELECT * FROM "Goal" WHERE userid = $1', [req.user.id]);
       const metasNoBanco = metasResult.rows;
       const termo = (aiResponse.meta || '').toLowerCase();
       let targetGoal = metasNoBanco.find(m => m.name.toLowerCase().includes(termo));
@@ -459,7 +459,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
         // Notificação de meta concluída
         if (newVal >= targetGoal.target) {
           await db.query(
-            'INSERT INTO "Notification" (tipo, mensagem, "userId") VALUES ($1, $2, $3)',
+            'INSERT INTO "Notification" (tipo, mensagem, userid) VALUES ($1, $2, $3)',
             ['goal', `🎯 Parabéns! Você concluiu sua meta: ${targetGoal.name}!`, req.user.id]
           );
         }
@@ -479,7 +479,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       const cat = await ensureCategory(aiResponse.categoria, aiResponse.tipo, req.user.id);
       const todayDate = new Date().toISOString().split('T')[0];
       const insert = await db.query(
-        'INSERT INTO "Transaction" (tipo, valor, "categoriaId", descricao, data, "userId") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        'INSERT INTO "Transaction" (tipo, valor, categoriaid, descricao, data, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
         [aiResponse.tipo, aiResponse.valor, cat.id, aiResponse.descricao || message, aiResponse.data || todayDate, req.user.id]
       );
       const trans = insert.rows[0];
@@ -491,7 +491,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
     // ── Resumo Dashboard ──────────────────────────────────────────────────────
     if (aiResponse.tipo === 'dashboard_resumo') {
-      const transResult = await db.query('SELECT * FROM "Transaction" WHERE "userId" = $1', [req.user.id]);
+      const transResult = await db.query('SELECT * FROM "Transaction" WHERE userid = $1', [req.user.id]);
       const trans = transResult.rows;
       const gastos = trans.filter(t => t.tipo === 'gasto').reduce((sum, t) => sum + t.valor, 0);
       const ganhos = trans.filter(t => t.tipo === 'ganho').reduce((sum, t) => sum + t.valor, 0);
@@ -512,32 +512,32 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
       if (usuarios.length === 0) {
         const botMsg = `Não encontrei ninguém chamado "${nomeBusca}" na rede social. 😕`;
-        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
 
       if (aiResponse.tipo === 'social_seguir') {
         const alvo = usuarios[0];
         try {
-          await db.query('INSERT INTO "Follow" ("followerId", "followingId") VALUES ($1, $2)', [req.user.id, alvo.id]);
+          await db.query('INSERT INTO "Follow" (followerid, followingid) VALUES ($1, $2)', [req.user.id, alvo.id]);
 
           // Notificação para quem foi seguido
           await db.query(
-            'INSERT INTO "Notification" (tipo, mensagem, "userId") VALUES ($1, $2, $3)',
+            'INSERT INTO "Notification" (tipo, mensagem, userid) VALUES ($1, $2, $3)',
             ['follower', `👤 ${user.nome} começou a seguir você!`, alvo.id]
           );
 
           const botMsg = `✅ Comecei a seguir **${alvo.nome}** pra você! Vá na aba Social para conferir.`;
-          await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+          await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
           return res.json({ success: true, message: botMsg });
         } catch {
           const botMsg = `Você já segue **${alvo.nome}**!`;
-          await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+          await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
           return res.json({ success: true, message: botMsg });
         }
       } else {
         const botMsg = `🔍 Achei estas pessoas: ${usuarios.map(u => u.nome).join(', ')}. Se quiser posso seguir algum deles! Diga "seguir [nome]".`;
-        await db.query('INSERT INTO "ChatMessage" (texto, sender, "userId") VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
+        await db.query('INSERT INTO "ChatMessage" (texto, sender, userid) VALUES ($1, $2, $3)', [botMsg, 'bot', req.user.id]);
         return res.json({ success: true, message: botMsg });
       }
     }
@@ -554,7 +554,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
 app.get('/api/chat/history', authMiddleware, async (req, res) => {
   const result = await db.query(
-    'SELECT * FROM "ChatMessage" WHERE "userId" = $1 ORDER BY "createdAt" ASC LIMIT 50',
+    'SELECT * FROM "ChatMessage" WHERE userid = $1 ORDER BY createdat ASC LIMIT 50',
     [req.user.id]
   );
   res.json(result.rows);
@@ -568,7 +568,7 @@ app.get('/api/social/search', authMiddleware, async (req, res) => {
 
   try {
     const userResult = await db.query(
-      `SELECT id, nome, "avatarUrl", email 
+      `SELECT id, nome, avatarurl, email 
        FROM "User" 
        WHERE (nome ILIKE $1 OR email ILIKE $1) AND id <> $2 
        LIMIT 15`,
@@ -576,13 +576,13 @@ app.get('/api/social/search', authMiddleware, async (req, res) => {
     );
 
     // Verificar quais já estamos seguindo
-    const followResult = await db.query('SELECT "followingId" FROM "Follow" WHERE "followerId" = $1', [req.user.id]);
-    const followingIds = new Set(followResult.rows.map(f => f.followingId));
+    const followResult = await db.query('SELECT followingid FROM "Follow" WHERE followerid = $1', [req.user.id]);
+    const followingIds = new Set(followResult.rows.map(f => f.followingid));
 
     const result = userResult.rows.map(u => ({
       id: u.id,
       nome: u.nome,
-      avatarUrl: u.avatarUrl,
+      avatarUrl: u.avatarurl,
       isFollowing: followingIds.has(u.id)
     }));
     res.json(result);
@@ -595,10 +595,10 @@ app.get('/api/social/search', authMiddleware, async (req, res) => {
 app.get('/api/social/following', authMiddleware, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT u.id, u.nome, u."avatarUrl" 
+      `SELECT u.id, u.nome, u.avatarurl 
        FROM "Follow" f 
-       JOIN "User" u ON f."followingId" = u.id 
-       WHERE f."followerId" = $1`,
+       JOIN "User" u ON f.followingid = u.id 
+       WHERE f.followerid = $1`,
       [req.user.id]
     );
     const formatted = result.rows.map(u => ({ ...u, isFollowing: true }));
@@ -611,15 +611,15 @@ app.get('/api/social/following', authMiddleware, async (req, res) => {
 
 app.get('/api/social/followers', authMiddleware, async (req, res) => {
   const result = await db.query(
-    `SELECT u.id, u.nome, u."avatarUrl" 
+    `SELECT u.id, u.nome, u.avatarurl 
      FROM "Follow" f 
-     JOIN "User" u ON f."followerId" = u.id 
-     WHERE f."followingId" = $1`,
+     JOIN "User" u ON f.followerid = u.id 
+     WHERE f.followingid = $1`,
     [req.user.id]
   );
 
-  const myFollowsResult = await db.query('SELECT "followingId" FROM "Follow" WHERE "followerId" = $1', [req.user.id]);
-  const followingIds = new Set(myFollowsResult.rows.map(f => f.followingId));
+  const myFollowsResult = await db.query('SELECT followingid FROM "Follow" WHERE followerid = $1', [req.user.id]);
+  const followingIds = new Set(myFollowsResult.rows.map(f => f.followingid));
 
   const formatted = result.rows.map(u => ({ ...u, isFollowing: followingIds.has(u.id) }));
   res.json(formatted);
@@ -630,7 +630,7 @@ app.post('/api/social/follow/:id', authMiddleware, async (req, res) => {
   if (followingId === req.user.id) return res.status(400).json({ error: 'Você não pode seguir a si mesmo' });
 
   try {
-    await db.query('INSERT INTO "Follow" ("followerId", "followingId") VALUES ($1, $2)', [req.user.id, followingId]);
+    await db.query('INSERT INTO "Follow" (followerid, followingid) VALUES ($1, $2)', [req.user.id, followingId]);
     res.json({ success: true });
   } catch (e) {
     res.status(400).json({ error: 'Já está seguindo este usuário' });
@@ -639,14 +639,14 @@ app.post('/api/social/follow/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/social/follow/:id', authMiddleware, async (req, res) => {
   const followingId = parseInt(req.params.id);
-  await db.query('DELETE FROM "Follow" WHERE "followerId" = $1 AND "followingId" = $2', [req.user.id, followingId]);
+  await db.query('DELETE FROM "Follow" WHERE followerid = $1 AND followingid = $2', [req.user.id, followingId]);
   res.json({ success: true });
 });
 
 app.post('/api/correct', authMiddleware, async (req, res) => {
   const { transactionId, novaCategoriaId } = req.body;
   await db.query(
-    'UPDATE "Transaction" SET "categoriaId" = $1 WHERE id = $2 AND "userId" = $3',
+    'UPDATE "Transaction" SET categoriaid = $1 WHERE id = $2 AND userid = $3',
     [novaCategoriaId, transactionId, req.user.id]
   );
   res.json({ success: true });
@@ -659,12 +659,12 @@ app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) =>
     const userCountResult = await db.query('SELECT COUNT(*) FROM "User"');
     const transCountResult = await db.query('SELECT COUNT(*) FROM "Transaction"');
     const sumValResult = await db.query('SELECT SUM(valor) FROM "Transaction"');
-    const recentUsersResult = await db.query('SELECT id, nome, email, role, "createdAt", "onboardingDone" FROM "User" ORDER BY "createdAt" DESC LIMIT 10');
+    const recentUsersResult = await db.query('SELECT id, nome, email, role, createdat, onboardingdone FROM "User" ORDER BY createdat DESC LIMIT 10');
 
     const transByDayResult = await db.query(
       `SELECT data, COUNT(id) as count 
        FROM "Transaction" 
-       WHERE "createdAt" >= NOW() - INTERVAL '7 days' 
+       WHERE createdat >= NOW() - INTERVAL '7 days' 
        GROUP BY data 
        ORDER BY data ASC`
     );

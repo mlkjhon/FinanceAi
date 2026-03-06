@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, ArrowLeft, Calculator, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from './api';
+import { useToast } from './components/Toast';
 
 interface Category {
     id: number;
@@ -34,6 +33,8 @@ const Spreadsheet = () => {
     });
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ type: 'success' | 'error' | 'none', msg: string }>({ type: 'none', msg: '' });
+    const { showToast } = useToast();
+    const [history, setHistory] = useState<Row[]>([]);
 
     useEffect(() => {
         const fetchCats = async () => {
@@ -104,8 +105,14 @@ const Spreadsheet = () => {
             ));
 
             setStatus({ type: 'success', msg: `${validRows.length} registros salvos com sucesso!` });
+            showToast(`${validRows.length} registros salvos!`, 'success');
+
+            // Adicionar ao histórico local da sessão
+            setHistory([...validRows, ...history]);
+
+            // Limpar rascunho e resetar linhas
             localStorage.removeItem('spreadsheet_draft');
-            setTimeout(() => navigate('/dashboard'), 2000);
+            setRows([{ id: Math.random().toString(36).substr(2, 9), tipo: 'gasto', valor: '', categoriaId: '', descricao: '', data: new Date().toISOString().split('T')[0] }]);
         } catch (err: any) {
             console.error(err);
             setStatus({ type: 'error', msg: 'Erro ao salvar alguns registros. Verifique os dados.' });
@@ -305,6 +312,29 @@ const Spreadsheet = () => {
                     {loading ? 'Salvando...' : <><Save size={20} /> Salvar Tudo</>}
                 </button>
             </div>
+
+            {history.length > 0 && (
+                <div style={{ marginTop: '40px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '20px', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Calculator size={18} /> Lançamentos desta Sessão
+                    </h3>
+                    <div style={{ ...glassStyle, padding: '1px', overflow: 'hidden', borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.1)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <tbody style={{ color: 'rgba(255,255,255,0.4)' }}>
+                                {history.map((h, i) => (
+                                    <tr key={i} style={{ borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.02)' }}>
+                                        <td style={{ padding: '12px 24px' }}>{h.tipo === 'ganho' ? '🟢 Ganho' : '🔴 Gasto'}</td>
+                                        <td style={{ padding: '12px 24px', fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>R$ {parseFloat(h.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                                        <td style={{ padding: '12px 24px' }}>{categories.find(c => c.id === parseInt(h.categoriaId))?.nome || '—'}</td>
+                                        <td style={{ padding: '12px 24px' }}>{h.descricao || 'Registro Via Planilha'}</td>
+                                        <td style={{ padding: '12px 24px' }}>{h.data.split('-').reverse().join('/')}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

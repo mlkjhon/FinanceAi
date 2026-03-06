@@ -168,7 +168,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, trustedDevice } = req.body;
   try {
     const result = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
     const user = result.rows[0];
@@ -177,8 +177,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const passMatch = await comparePassword(password, user.password);
     if (!passMatch) return res.status(401).json({ error: 'E-mail ou senha inválidos' });
 
-    // Handle 2FA
-    if (user.twofa_enabled) {
+    // Handle 2FA if device is not trusted
+    if (user.twofa_enabled && !trustedDevice) {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       const expires = new Date(Date.now() + 10 * 60000); // 10 minutes
 

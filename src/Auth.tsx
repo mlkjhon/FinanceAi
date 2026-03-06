@@ -25,18 +25,25 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
                 // Verify 2FA Code
                 const { data } = await api.post('/auth/verify-2fa', { userId, code: twofaCode });
                 localStorage.setItem('token', data.token);
+                // Mark this device as trusted for 30 days
+                localStorage.setItem(`trusted_device_${data.user.id}`, 'true');
                 onLogin(data.user);
                 return;
             }
 
             const endpoint = isLogin ? '/auth/login' : '/auth/register';
-            const { data } = await api.post(endpoint, formData);
+            // Send email to check if there is a trusted device token locally
+            const payload = isLogin ? { ...formData, trustedDevice: localStorage.getItem(`trusted_device_${formData.email}`) === 'true' } : formData;
+            const { data } = await api.post(endpoint, payload);
 
             if (data.requires2FA) {
                 setRequires2FA(true);
                 setUserId(data.userId);
             } else {
                 localStorage.setItem('token', data.token);
+                if (isLogin) {
+                    localStorage.setItem(`trusted_device_${formData.email}`, 'true');
+                }
                 onLogin(data.user);
             }
         } catch (err: any) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Plus, CheckCircle2, Flame, TrendingUp, Minus, PlusCircle } from 'lucide-react';
+import { Target, Plus, CheckCircle2, Flame, TrendingUp, Minus, PlusCircle, Trash2 } from 'lucide-react';
 import api from './api';
 
 const Goals = () => {
@@ -92,6 +92,17 @@ const Goals = () => {
             setTransactionAmount('');
             fetchGoals();
         } catch (e) { console.error(e); }
+    };
+
+    const handleDeleteGoal = async (id: number) => {
+        if (!window.confirm('Tem certeza que deseja excluir esta meta?')) return;
+        try {
+            await api.delete(`/goals/${id}`);
+            fetchGoals();
+        } catch (e) {
+            console.error(e);
+            alert('Erro ao excluir meta.');
+        }
     };
 
     const cardContentStyle = { padding: '24px', marginBottom: '20px' };
@@ -192,6 +203,7 @@ const Goals = () => {
                                     <div style={{ display: 'flex', gap: '8px' }}>
                                         <button disabled={goal.current >= goal.target} onClick={() => { setActiveGoalId(goal.id); setTransactionType('add'); setTransactionAmount(''); }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: goal.current >= goal.target ? 'rgba(255,255,255,0.05)' : 'rgba(16,185,129,0.1)', border: 'none', color: goal.current >= goal.target ? 'rgba(255,255,255,0.2)' : '#10b981', cursor: goal.current >= goal.target ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={18} /></button>
                                         <button onClick={() => { setActiveGoalId(goal.id); setTransactionType('remove'); setTransactionAmount(''); }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={18} /></button>
+                                        <button onClick={() => handleDeleteGoal(goal.id)} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.05)', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Excluir Meta"><Trash2 size={16} /></button>
                                     </div>
                                 </div>
                             </div>

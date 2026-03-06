@@ -81,6 +81,12 @@ const Spreadsheet = () => {
             return;
         }
 
+        const rowsWithoutCategory = validRows.filter(r => !r.categoriaId);
+        if (rowsWithoutCategory.length > 0) {
+            setStatus({ type: 'error', msg: `Selecione a CATEGORIA para todos os registros preenchidos (${rowsWithoutCategory.length} pendentes).` });
+            return;
+        }
+
         setLoading(true);
         setStatus({ type: 'none', msg: '' });
 

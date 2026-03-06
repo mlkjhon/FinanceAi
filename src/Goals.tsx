@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Target, Plus, CheckCircle2, Flame, TrendingUp, Minus, PlusCircle, Trash2 } from 'lucide-react';
 import api from './api';
 import { useToast, ConfirmModal } from './components/Toast';

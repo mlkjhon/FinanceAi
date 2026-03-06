@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+import { Save, Plus, Trash2, ArrowLeft, Calculator, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from './api';
 import { useToast } from './components/Toast';

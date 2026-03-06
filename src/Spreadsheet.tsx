@@ -21,9 +21,17 @@ interface Row {
 const Spreadsheet = () => {
     const navigate = useNavigate();
     const [categories, setCategories] = useState<Category[]>([]);
-    const [rows, setRows] = useState<Row[]>([
-        { id: '1', tipo: 'gasto', valor: '', categoriaId: '', descricao: '', data: new Date().toISOString().split('T')[0] }
-    ]);
+    const [rows, setRows] = useState<Row[]>(() => {
+        const saved = localStorage.getItem('spreadsheet_draft');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.error('Erro ao carregar rascunho', e);
+            }
+        }
+        return [{ id: '1', tipo: 'gasto', valor: '', categoriaId: '', descricao: '', data: new Date().toISOString().split('T')[0] }];
+    });
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ type: 'success' | 'error' | 'none', msg: string }>({ type: 'none', msg: '' });
 
@@ -38,6 +46,10 @@ const Spreadsheet = () => {
         };
         fetchCats();
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('spreadsheet_draft', JSON.stringify(rows));
+    }, [rows]);
 
     const addRow = () => {
         setRows([
@@ -86,6 +98,7 @@ const Spreadsheet = () => {
             ));
 
             setStatus({ type: 'success', msg: `${validRows.length} registros salvos com sucesso!` });
+            localStorage.removeItem('spreadsheet_draft');
             setTimeout(() => navigate('/dashboard'), 2000);
         } catch (err: any) {
             console.error(err);

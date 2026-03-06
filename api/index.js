@@ -132,12 +132,10 @@ app.get('/api/debug', async (req, res) => {
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com', // you can use any SMTP server
-  port: 587,
-  secure: false, // true for 465, false for other ports
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER || 'financeai.noreply@gmail.com',
-    pass: process.env.EMAIL_PASS || 'dummy_password' // User will need to configure this in .env
+    pass: process.env.EMAIL_PASS || 'dummy_password'
   }
 });
 
@@ -204,7 +202,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
                  </div>`
         });
       } catch (e) {
-        console.error('Failed to send email:', e);
+        console.error('Failed to send login 2FA email:', e);
+        return res.status(500).json({ error: 'Falha ao enviar e-mail de verificação. Verifique o servidor SMTP.' });
       }
 
       return res.json({ requires2FA: true, userId: user.id, email: user.email });
@@ -277,6 +276,7 @@ app.post('/api/auth/enable-2fa', authMiddleware, async (req, res) => {
           html: `<h1>Ativação de 2 Fatores</h1><p>Seu código é: <b>${generatedCode}</b></p>`
         });
       } catch (e) {
+        console.error('Falha no SMTP:', e);
         return res.status(500).json({ error: 'Falha ao enviar e-mail. Verifique o servidor SMTP.' });
       }
 

@@ -255,21 +255,43 @@ const Profile = ({ onLogout }: ProfileProps) => {
                                     <p style={{ fontWeight: 700, fontSize: '15px' }}>Verificação em 2 Fatores</p>
                                     <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px' }}>Enviaremos um código por e-mail no login</p>
                                 </div>
-                                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                    <div style={{
-                                        width: '44px', height: '24px', borderRadius: '12px',
-                                        background: user.twofa_enabled ? '#10b981' : 'rgba(255,255,255,0.1)',
-                                        position: 'relative', transition: 'all 0.3s'
-                                    }}>
+                                {!user.twofa_enabled ? (
+                                    <button
+                                        onClick={handleToggle2FA}
+                                        disabled={loading2FA}
+                                        style={{
+                                            padding: '10px 20px',
+                                            background: '#ef4444',
+                                            border: 'none',
+                                            borderRadius: '12px',
+                                            color: 'white',
+                                            fontWeight: 700,
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                                        onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                    >
+                                        Autenticar agora
+                                    </button>
+                                ) : (
+                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                                         <div style={{
-                                            width: '20px', height: '20px', borderRadius: '50%',
-                                            background: 'white', position: 'absolute', top: '2px',
-                                            left: user.twofa_enabled ? '22px' : '2px', transition: 'all 0.3s',
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                                        }} />
-                                    </div>
-                                    <input type="checkbox" checked={!!user.twofa_enabled} onChange={handleToggle2FA} disabled={loading2FA} style={{ display: 'none' }} />
-                                </label>
+                                            width: '44px', height: '24px', borderRadius: '12px',
+                                            background: user.twofa_enabled ? '#10b981' : 'rgba(255,255,255,0.1)',
+                                            position: 'relative', transition: 'all 0.3s'
+                                        }}>
+                                            <div style={{
+                                                width: '20px', height: '20px', borderRadius: '50%',
+                                                background: 'white', position: 'absolute', top: '2px',
+                                                left: user.twofa_enabled ? '22px' : '2px', transition: 'all 0.3s',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                            }} />
+                                        </div>
+                                        <input type="checkbox" checked={!!user.twofa_enabled} onChange={handleToggle2FA} disabled={loading2FA} style={{ display: 'none' }} />
+                                    </label>
+                                )}
                             </div>
                         </div>
                     </div>

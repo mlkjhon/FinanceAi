@@ -404,6 +404,22 @@ app.get('/api/transactions', authMiddleware, async (req, res) => {
   res.json(formatted);
 });
 
+app.post('/api/transactions', authMiddleware, async (req, res) => {
+  const { valor, descricao, data, categoriaId, tipo } = req.body;
+  if (!valor || !tipo) return res.status(400).json({ error: 'Valor e tipo são obrigatórios' });
+
+  try {
+    const result = await db.query(
+      'INSERT INTO "Transaction" (valor, descricao, data, categoriaid, tipo, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [valor, descricao, data, categoriaId, tipo, req.user.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('[POST /transactions]', err);
+    res.status(500).json({ error: 'Erro ao criar transação' });
+  }
+});
+
 app.put('/api/transactions/:id', authMiddleware, async (req, res) => {
   const { valor, descricao, data, categoriaId, tipo } = req.body;
   const id = parseInt(req.params.id);

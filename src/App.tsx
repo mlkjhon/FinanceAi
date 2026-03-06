@@ -10,7 +10,6 @@ import Goals from './Goals';
 import LandingPage from './LandingPage';
 import Onboarding from './Onboarding';
 import { MessageSquare, LayoutDashboard, LogOut, ShieldCheck, User as UserIcon, TrendingUp, Target, Users, Bell } from 'lucide-react';
-import Social from './Social';
 import Spreadsheet from './Spreadsheet';
 import api from './api';
 import { ToastProvider, useToast } from './components/Toast';
@@ -158,7 +157,6 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
           {navItem('/dashboard', 'Dashboard', LayoutDashboard)}
           {navItem('/investments', 'Investimentos', TrendingUp)}
           {navItem('/goals', 'Metas', Target)}
-          {navItem('/social', 'Social', Users)}
           {navItem('/spreadsheet', 'Planilha', TrendingUp)}
           {isAdmin && navItem('/admin', 'Admin', ShieldCheck)}
         </nav>
@@ -254,7 +252,6 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
             <Route path="/goals" element={<Goals />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile onLogout={onLogout} />} />
-            <Route path="/social" element={<Social />} />
             <Route path="/spreadsheet" element={<Spreadsheet />} />
             {isAdmin && <Route path="/admin" element={<AdminDashboard />} />}
             <Route path="*" element={<Navigate to="/" />} />

@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -19,13 +20,13 @@ const {
 } = require('./lib/auth');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const multer = require('multer');
-const pdfParse = require('pdf-parse');
+// pdf-parse is lazy-loaded inside the upload endpoint to avoid DOMMatrix crash on startup
 const csv = require('csv-parser');
 const xlsx = require('xlsx');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Proteção Básica de Headers
@@ -79,9 +80,10 @@ function parseMoney(text) {
   const lower = text.toLowerCase().replace(/r\$/g, '').replace(/,/g, '.').trim();
   let multiplier = 1;
 
-  if (/\bbilh[ão]o\b|\bbilh[õo]es\b|\bbi\b/i.test(lower)) multiplier = 1000000000;
-  else if (/\bmilh[ão]o\b|\bmilh[õo]es\b|\bmi\b/i.test(lower)) multiplier = 1000000;
-  else if (/\bmil\b/i.test(lower)) multiplier = 1000;
+  if (/trilh[ão]o|trilh[õo]es|tri/i.test(lower)) multiplier = 1000000000000;
+  else if (/bilh[ão]o|bilh[õo]es|bi/i.test(lower)) multiplier = 1000000000;
+  else if (/milh[ão]o|milh[õo]es|mi/i.test(lower)) multiplier = 1000000;
+  else if (/mil/i.test(lower)) multiplier = 1000;
 
   const match = lower.match(/[\d.]+/);
   if (!match) {
@@ -127,22 +129,27 @@ app.get('/api/debug', async (req, res) => {
 });
 
 
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER || 'financeai.noreply@gmail.com',
+    pass: process.env.EMAIL_PASS || 'dummy_password'
+  }
+});
+
 app.post('/api/auth/register', async (req, res) => {
   const { nome, email, password, adminCode } = req.body;
   if (!nome || !email || !password) return res.status(400).json({ error: 'Campos obrigatórios' });
 
-  // Validação de complexidade
   if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
     return res.status(400).json({ error: 'A senha deve ter no mínimo 8 caracteres contendo letras e números.' });
   }
 
   try {
-    console.log('[Register Attempt]:', { email, nome });
     const existingResult = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
-    if (existingResult.rows.length > 0) {
-      console.log('[Register Fail]: E-mail já cadastrado');
-      return res.status(400).json({ error: 'E-mail já cadastrado' });
-    }
+    if (existingResult.rows.length > 0) return res.status(400).json({ error: 'E-mail já cadastrado' });
 
     const hashedPassword = await hashPassword(password);
     const role = (adminCode === 'ADMIN123') ? 'ADMIN' : 'USER';
@@ -152,36 +159,57 @@ app.post('/api/auth/register', async (req, res) => {
       [nome, email, hashedPassword, role]
     );
     const user = insertResult.rows[0];
-    console.log('[Register Success]:', user.id);
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
     res.json({ token, user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone } });
   } catch (err) {
-    console.error('[Register Error FULL]:', err);
-    res.status(500).json({ error: 'Erro ao registrar usuário', details: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Erro ao registrar usuário' });
   }
 });
 
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, trustedDevice } = req.body;
   try {
-    console.log('[Login Attempt]:', email);
     const result = await db.query('SELECT * FROM "User" WHERE email = $1', [email]);
     const user = result.rows[0];
-    if (!user) {
-      console.log('[Login Fail]: Usuário não encontrado');
-      return res.status(401).json({ error: 'E-mail ou senha inválidos' });
-    }
+    if (!user) return res.status(401).json({ error: 'E-mail ou senha inválidos' });
 
     const passMatch = await comparePassword(password, user.password);
-    if (!passMatch) {
-      console.log('[Login Fail]: Senha incorreta');
-      return res.status(401).json({ error: 'E-mail ou senha inválidos' });
+    if (!passMatch) return res.status(401).json({ error: 'E-mail ou senha inválidos' });
+
+    // Handle 2FA if device is not trusted
+    if (user.twofa_enabled && !trustedDevice) {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = new Date(Date.now() + 10 * 60000); // 10 minutes
+
+      await db.query(
+        'UPDATE "User" SET twofa_code = $1, twofa_expires = $2 WHERE id = $3',
+        [code, expires, user.id]
+      );
+
+      try {
+        await transporter.sendMail({
+          from: '"FinanceAI Segurança" <financeai.noreply@gmail.com>',
+          to: user.email,
+          subject: 'Seu código de acesso FinanceAI',
+          html: `<div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                   <h2 style="color: #ef4444;">FinanceAI Security</h2>
+                   <p>Olá ${user.nome}, seu código de acesso é:</p>
+                   <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; padding: 20px; text-align: center; background: #f9fafb; border-radius: 8px;">
+                     ${code}
+                   </div>
+                   <p style="color: #666; font-size: 12px; margin-top: 20px;">Este código expira em 10 minutos.</p>
+                 </div>`
+        });
+      } catch (e) {
+        console.error('Failed to send login 2FA email:', e);
+        return res.status(500).json({ error: 'Falha ao enviar e-mail de verificação. Verifique o servidor SMTP.' });
+      }
+
+      return res.json({ requires2FA: true, userId: user.id, email: user.email });
     }
 
     const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
-
-    // Safely parse onboardingdata if it's a string, otherwise use as is
     let onboardingData = user.onboardingdata;
     if (typeof onboardingData === 'string') {
       try { onboardingData = JSON.parse(onboardingData); } catch (e) { onboardingData = null; }
@@ -189,19 +217,84 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
     res.json({
       token,
-      user: {
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        role: user.role,
-        onboardingDone: user.onboardingdone,
-        onboardingData,
-        avatarUrl: user.avatarurl
-      }
+      user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone, onboardingData, avatarUrl: user.avatarurl }
     });
   } catch (err) {
-    console.error('[Login Error]:', err);
-    res.status(500).json({ error: 'Erro ao fazer login', details: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Erro ao fazer login' });
+  }
+});
+
+app.post('/api/auth/verify-2fa', loginLimiter, async (req, res) => {
+  const { userId, code } = req.body;
+  if (!userId || !code) return res.status(400).json({ error: 'Campos inválidos' });
+
+  try {
+    const result = await db.query('SELECT * FROM "User" WHERE id = $1', [userId]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    if (user.twofa_code !== code) return res.status(401).json({ error: 'Código incorreto' });
+    if (new Date() > new Date(user.twofa_expires)) return res.status(401).json({ error: 'Código expirado' });
+
+    // Clear code and login user
+    await db.query('UPDATE "User" SET twofa_code = NULL, twofa_expires = NULL WHERE id = $1', [user.id]);
+
+    const token = signToken({ id: user.id, email: user.email, role: user.role, nome: user.nome });
+    let onboardingData = user.onboardingdata;
+    if (typeof onboardingData === 'string') {
+      try { onboardingData = JSON.parse(onboardingData); } catch (e) { onboardingData = null; }
+    }
+
+    res.json({
+      token,
+      user: { id: user.id, nome: user.nome, email: user.email, role: user.role, onboardingDone: user.onboardingdone, onboardingData, avatarUrl: user.avatarurl }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao verificar código' });
+  }
+});
+
+app.post('/api/auth/enable-2fa', authMiddleware, async (req, res) => {
+  const { action, code } = req.body; // action: 'request', 'verify', 'disable'
+
+  try {
+    if (action === 'disable') {
+      await db.query('UPDATE "User" SET twofa_enabled = FALSE WHERE id = $1', [req.user.id]);
+      return res.json({ success: true, message: '2FA desativado' });
+    }
+
+    if (action === 'request') {
+      const generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expires = new Date(Date.now() + 10 * 60000);
+      await db.query('UPDATE "User" SET twofa_code = $1, twofa_expires = $2 WHERE id = $3', [generatedCode, expires, req.user.id]);
+
+      try {
+        await transporter.sendMail({
+          from: '"FinanceAI Segurança" <financeai.noreply@gmail.com>',
+          to: req.user.email,
+          subject: 'Ativação do 2FA - FinanceAI',
+          html: `<h1>Ativação de 2 Fatores</h1><p>Seu código é: <b>${generatedCode}</b></p>`
+        });
+      } catch (e) {
+        console.error('Falha no SMTP:', e);
+        return res.status(500).json({ error: 'Falha ao enviar e-mail. Verifique o servidor SMTP.' });
+      }
+
+      return res.json({ success: true, message: 'Código enviado por e-mail' });
+    }
+
+    if (action === 'verify') {
+      const result = await db.query('SELECT twofa_code, twofa_expires FROM "User" WHERE id = $1', [req.user.id]);
+      const user = result.rows[0];
+
+      if (user.twofa_code !== code) return res.status(401).json({ error: 'Código incorreto' });
+      if (new Date() > new Date(user.twofa_expires)) return res.status(401).json({ error: 'Código expirado' });
+
+      await db.query('UPDATE "User" SET twofa_enabled = TRUE, twofa_code = NULL, twofa_expires = NULL WHERE id = $1', [req.user.id]);
+      return res.json({ success: true, message: '2FA ativado com sucesso!' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Erro na configuração do 2FA' });
   }
 });
 
@@ -353,11 +446,32 @@ app.put('/api/goals/:id', authMiddleware, async (req, res) => {
   const { current, name, target, color, icon } = req.body;
   const id = parseInt(req.params.id);
   try {
+    // Buscar valor atual antes do update para registrar transação se o saldo mudou
+    const oldGoalResult = await db.query('SELECT current, name FROM "Goal" WHERE id = $1 AND userid = $2', [id, req.user.id]);
+    const oldGoal = oldGoalResult.rows[0];
+
     const result = await db.query(
       'UPDATE "Goal" SET current = COALESCE($1, current), name = COALESCE($2, name), target = COALESCE($3, target), color = COALESCE($4, color), icon = COALESCE($5, icon) WHERE id = $6 AND userid = $7 RETURNING *',
       [current, name, target, color, icon, id, req.user.id]
     );
-    res.json(result.rows[0]);
+    const updatedGoal = result.rows[0];
+
+    // Se o valor de 'current' mudou manualmente pela UI, registrar transação
+    if (oldGoal && current !== undefined && Number(current) !== Number(oldGoal.current)) {
+      const diff = Number(current) - Number(oldGoal.current);
+      const isAddition = diff > 0;
+      const transTipo = isAddition ? 'gasto' : 'ganho'; // Colocar na meta = gasta do saldo, Tirar da meta = ganha no saldo
+      const transDesc = isAddition ? `Depósito manual na meta: ${updatedGoal.name}` : `Resgate manual na meta: ${updatedGoal.name}`;
+      const cat = await ensureCategory('Metas', transTipo, req.user.id);
+      const dataHoje = new Date().toISOString().split('T')[0];
+
+      await db.query(
+        'INSERT INTO "Transaction" (tipo, valor, categoriaid, descricao, data, userid) VALUES ($1, $2, $3, $4, $5, $6)',
+        [transTipo, Math.abs(diff), cat.id, transDesc, dataHoje, req.user.id]
+      );
+    }
+
+    res.json(updatedGoal);
   } catch (e) {
     console.error('[PUT /goals]', e);
     res.status(500).json({ error: 'Erro ao atualizar meta' });
@@ -434,7 +548,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       ? goalsResult.rows.map(g => `- "${g.name}": R$ ${g.current?.toFixed(2)} / R$ ${g.target?.toFixed(2)}`).join('\n')
       : '(sem metas cadastradas)';
 
-    const prompt = `Você é o Mentor Financeiro da FinanceAI. Seu objetivo é ajudar o usuário a gerir finanças de forma inteligente e motivadora.
+    const prompt = `Você é o Mentor Financeiro da FinanceAI — um especialista financeiro sênior, frio, preciso e orientado a dados.
     O usuário disse: "${message}"
 
     CONTEXTO DO USUÁRIO:
@@ -451,20 +565,37 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     TAREFA: Analise a frase e determine a intenção correta de acordo com as seguintes ações:
     1. Registrar Gasto/Ganho: { "tipo": "gasto" | "ganho", "valor": number, "categoria": string, "descricao": string }
     2. Criar Meta: { "tipo": "criar_meta", "nome": string, "valor_alvo": number }
-    3. Movimentar Meta: { "tipo": "meta", "acao": "adicionar", "valor": number, "meta": string }
+    3. Movimentar Meta: { "tipo": "meta", "acao": "adicionar" | "remover", "valor": number, "meta": string }
     4. Resumo: { "tipo": "dashboard_resumo" }
-    5. Social: { "tipo": "social_buscar" | "social_seguir", "nome": string }
-    6. Conversa/Dica: { "tipo": "conversa", "resposta": string } (Seja empático e dê dicas úteis)
+    5. Conversa/Dica/Dúvida Financeira: { "tipo": "conversa", "resposta": string }
+    6. Análise de Arquivo: { "tipo": "arquivo_extraido", "transacoes": [{ "data": "YYYY-MM-DD", "descricao": string, "valor": number, "tipo": "gasto"|"ganho", "categoria": string }] }
 
-    7. Análise de Arquivo: { "tipo": "arquivo_extraido", "transacoes": [{ "data": "YYYY-MM-DD", "descricao": string, "valor": number, "tipo": "gasto"|"ganho", "categoria": string }] } (Para extrair dados do OCR)
+    REGRAS CRÍTICAS — DESCRIÇÃO (MUITO IMPORTANTE):
+    - O campo "descricao" deve ser uma frase profissional e objetiva em PORTUGUÊS com NO MÁXIMO 40 caracteres.
+    - Extraia a palavra-chave principal da mensagem e construa uma descrição curta e profissional. Exemplos:
+      · "Gastei 50 em farmácia" → "Compras em Farmácia"
+      · "recebi meu salário" → "Crédito de Salário"
+      · "paguei aluguel" → "Pagamento de Aluguel"
+      · "ifood hoje" → "Pedido de Delivery"
+      · "gasolina" → "Abastecimento Veicular"
+      · "academia" → "Mensalidade Academia"
+    - NUNCA use a frase original crua do usuário como descrição. Sempre formule uma descrição profissional.
 
-    REGRAS CRÍTICAS:
-    - Extraia o valor numérico mesmo se estiver por extenso (ex: "mil" = 1000).
-    - IMPORTANTE: Se o usuário disser "adicione na meta", "guardei na meta", "depositei no objetivo", ou qualquer variação de mover dinheiro para uma meta, MAPEE ESTRITAMENTE PARA A AÇÃO 3 (Movimentar Meta). NUNCA registre isso como "gasto" ou "ganho".
-    - IMPORTANTE: Se o usuário disser "crie uma meta" ou "nova meta", MAPEE ESTRITAMENTE PARA A AÇÃO 2 (Criar Meta).
-    - IMPORTANTE: Se a mensagem for visivelmente um extrato bancário enorme com várias linhas e datas, MAPEE ESTRITAMENTE PARA A AÇÃO 7 (Análise de Arquivo).
-    - Para gastos/ganhos normais, use preferencialmente uma das categorias disponíveis: ${catList}.
-    - Responda EXCLUSIVAMENTE com o objeto JSON puro, sem textos adicionais, sem blocos markdown marcados por crases, e sem palavras como 'json'.
+    REGRAS CRÍTICAS — CONVERSAÇÃO:
+    - ATENÇÃO AOS NÚMEROS: "1mil" = 1000, "1 milhão" = 1000000, "2bi" = 2000000000.
+    - Se o usuário perguntar sobre INVESTIMENTOS (CDB, Tesouro, ações, FIIs, cripto, carteira, rentabilidade, risco, alocação, diversificação), USE A AÇÃO 5 (conversa) com uma resposta COMPLETA e PRÁTICA:
+      · Explique a opção de investimento com dados reais (taxa, risco, liquidez, indicação de perfil).
+      · Recomende baseado no perfil do usuário (${onboarding.profile}).
+      · Dê exemplos com valores concretos quando possível.
+    - Se o usuário pedir PLANO MENSAL, DICAS ou ANÁLISE DE GASTOS, USE A AÇÃO 5 (conversa) com:
+      · Análise das transações recentes do usuário.
+      · 3 a 5 ações práticas e específicas para o usuário executar.
+    - Se o usuário pedir para CRIAR UMA META MAS NÃO INFORMAR O NOME OU O VALOR ALVO, DEVOLVA A AÇÃO 5 (conversa) PERGUNTANDO: "Legal! Qual vai ser o nome da meta e qual o valor que você quer atingir?"
+    - Se o usuário disser "adicione na meta" / "guardei na meta" / "depositei", MAPEIE PARA AÇÃO 3 (meta). NUNCA registre como gasto/ganho.
+    - Se o usuário disser "crie uma meta" / "nova meta" / "quero guardar para", E INFORMAR NOME E VALOR, MAPEIE PARA AÇÃO 2 (criar_meta).
+    - Se a mensagem for visivelmente um extrato bancário com várias linhas e datas, MAPEIE PARA AÇÃO 6.
+    - Para gastos/ganhos, use preferencialmente uma das categorias disponíveis: ${catList}.
+    - Responda EXCLUSIVAMENTE com o objeto JSON puro, sem textos adicionais, sem blocos markdown, sem crases.
 
     Pergunta do Usuário: "${message}"`;
 
@@ -472,7 +603,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const result = await model.generateContent(prompt);
-      const text = result.response.text().replace(/```json | ```/g, '').trim();
+      const text = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
       aiResponse = JSON.parse(text);
     } catch (e) {
       console.error('Gemini Error:', e);
@@ -486,7 +617,7 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
       if (valorAlvo > 0) {
         const insert = await db.query(
           'INSERT INTO "Goal" (name, target, current, color, icon, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-          [nomeMeta, valorAlvo, 0, '#3b82f6', 'Target', req.user.id]
+          [nomeMeta, valorAlvo, 0, '#ef4444', 'Target', req.user.id]
         );
         const novaMeta = insert.rows[0];
         const botMsg = `🎯 Meta criada com sucesso! "${novaMeta.name}" — Alvo: R$ ${valorAlvo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}. Você pode acompanhar e depositar na aba Metas!`;
@@ -530,6 +661,19 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
         newVal = Math.max(0, Math.min(newVal, targetGoal.target));
 
         await db.query('UPDATE "Goal" SET current = $1 WHERE id = $2', [newVal, targetGoal.id]);
+
+        try {
+          const transTipo = aiResponse.acao === 'adicionar' ? 'gasto' : 'ganho';
+          const transDesc = aiResponse.acao === 'adicionar' ? `Depósito na meta: ${targetGoal.name}` : `Resgate da meta: ${targetGoal.name}`;
+          const cat = await ensureCategory('Metas', transTipo, req.user.id);
+          const dataHoje = new Date().toISOString().split('T')[0];
+          await db.query(
+            'INSERT INTO "Transaction" (tipo, valor, categoriaid, descricao, data, userid) VALUES ($1, $2, $3, $4, $5, $6)',
+            [transTipo, aiResponse.valor, cat.id, transDesc, dataHoje, req.user.id]
+          );
+        } catch (e) {
+          console.error('Erro ao registrar transação da meta:', e);
+        }
 
         // Notificação de meta concluída
         if (newVal >= targetGoal.target) {
@@ -669,20 +813,21 @@ app.post('/api/upload-extract', authMiddleware, upload.single('file'), async (re
 
   try {
     if (ext === '.pdf') {
-      const dataBuffer = fs.readFileSync(filePath);
-      const data = await pdfParse(dataBuffer);
+      const pdfParse = require('pdf-parse');
+      const data = await pdfParse(req.file.buffer);
       rawText = data.text;
     } else if (ext === '.csv') {
+      const { Readable } = require('stream');
       rawText = await new Promise((resolve, reject) => {
         const results = [];
-        fs.createReadStream(filePath)
-          .pipe(csv())
+        const stream = Readable.from(req.file.buffer.toString());
+        stream.pipe(csv())
           .on('data', (data) => results.push(JSON.stringify(data)))
           .on('end', () => resolve(results.join('\n')))
           .on('error', reject);
       });
     } else if (ext === '.xlsx' || ext === '.xls') {
-      const workbook = xlsx.readFile(filePath);
+      const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const rows = xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]);
       rawText = rows;
@@ -691,8 +836,10 @@ app.post('/api/upload-extract', authMiddleware, upload.single('file'), async (re
       return res.status(400).json({ error: 'Formato de arquivo não suportado. Envie .pdf, .csv ou .xlsx' });
     }
 
-    // Limpar arquivo temporário
-    fs.unlinkSync(filePath);
+    // Limpar arquivo temporário se existir (para compatibilidade caso multer mude)
+    if (req.file.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
 
     if (!rawText || rawText.trim().length === 0) {
       return res.status(400).json({ error: 'Não foi possível extrair texto do arquivo.' });
@@ -885,7 +1032,7 @@ app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) =>
     const userCountResult = await db.query('SELECT COUNT(*) FROM "User"');
     const transCountResult = await db.query('SELECT COUNT(*) FROM "Transaction"');
     const sumValResult = await db.query('SELECT SUM(valor) FROM "Transaction"');
-    const recentUsersResult = await db.query('SELECT id, nome, email, role, createdat, onboardingdone FROM "User" ORDER BY createdat DESC LIMIT 10');
+    const recentUsersResult = await db.query('SELECT id, nome, email, role, createdat, onboardingdone, status FROM "User" ORDER BY createdat DESC LIMIT 50');
 
     const transByDayResult = await db.query(
       `SELECT data, COUNT(id) as count 
@@ -971,7 +1118,15 @@ function fallbackParser(text) {
   // Ganho ou gasto
   const tipo = /ganhei|recebi|salario|salário|entrou|deposito|depósito|renda/.test(lower) ? 'ganho' : 'gasto';
   const valor = parseMoney(text);
-  if (valor === 0) return { tipo: 'conversa', resposta: 'Olá! 👋 Sou seu Mentor Financeiro. Posso registrar gastos, ganhos, criar metas ou dar dicas de investimento. Como posso ajudar?' };
+  if (valor === 0) {
+    if (lower.includes('dica') || lower.includes('investir') || lower.includes('plano') || lower.includes('analise') || lower.includes('análise')) {
+      return { tipo: 'conversa', resposta: 'Sou especialista em finanças. Com base no seu perfil, recomendo fazer aportes consistentes todo mês e construir uma reserva antes de buscar CDB ou ações. Posso detalhar mais se quiser!' };
+    }
+    if (lower.includes('ola') || lower.includes('olá') || lower.includes('oi') || lower.includes('bom dia') || lower.includes('boa tarde')) {
+      return { tipo: 'conversa', resposta: 'Olá! 👋 Sou seu Mentor Financeiro. Posso registrar gastos, ganhos, criar metas ou dar dicas de investimento. Como posso ajudar?' };
+    }
+    return { tipo: 'conversa', resposta: 'Para registrar, me diga o valor (ex: "Gastei 50 em ifood" ou "Ganhei 100 de freela"). Ou me pergunte alguma dúvida financeira!' };
+  }
 
   for (const item of KEYWORD_MAP) {
     if (item.keywords.some(kw => lower.includes(kw))) {

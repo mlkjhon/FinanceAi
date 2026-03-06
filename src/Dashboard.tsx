@@ -10,6 +10,7 @@ import {
   Plus, Calendar, Tag, FileText, AlertCircle, PieChart, BarChart3, Target, UploadCloud, BrainCircuit, Loader2, Play
 } from 'lucide-react';
 import api from './api';
+import { useToast } from './components/Toast';
 
 ChartJS.register(
   CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
@@ -33,15 +34,12 @@ interface Transaction {
   data: string;
 }
 
-const card = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: '20px',
-  padding: '24px',
-};
+// O card padrão agora usa a classe .glass do index.css
 
 const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 const COLORS = ['#ef4444', '#991b1b', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#a78bfa', '#fb923c', '#34d399', '#94a3b8'];
+
+const cardContentStyle = { padding: '32px' };
 
 // ─── Modal de Gestão de Categorias ──────────────────────────────────────────
 const CategoryManager = ({ categories, onClose, onRefresh }: {
@@ -51,6 +49,7 @@ const CategoryManager = ({ categories, onClose, onRefresh }: {
 }) => {
   const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState<'gasto' | 'ganho'>('gasto');
+  const { showToast } = useToast();
 
   const handleAdd = async () => {
     if (!nome) return;
@@ -58,7 +57,8 @@ const CategoryManager = ({ categories, onClose, onRefresh }: {
       await api.post('/categories', { nome, tipo });
       setNome('');
       onRefresh();
-    } catch (err: any) { alert(err.response?.data?.error || 'Erro ao adicionar'); }
+      showToast('Categoria adicionada!', 'success');
+    } catch (err: any) { showToast(err.response?.data?.error || 'Erro ao adicionar', 'error'); }
   };
 
   const handleDelete = async (id: number) => {
@@ -69,8 +69,8 @@ const CategoryManager = ({ categories, onClose, onRefresh }: {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(32px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div className="glass" style={{ maxWidth: '500px', width: '100%', padding: '32px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Minhas Categorias</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>
@@ -124,7 +124,7 @@ const EditModal = ({ transaction, categories, onClose, onSave }: {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+      <div className="glass" style={{ ...cardContentStyle, maxWidth: '500px', width: '100%', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Editar Transação</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>
@@ -190,6 +190,7 @@ const EditModal = ({ transaction, categories, onClose, onSave }: {
 const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: () => void }) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleUpload = async () => {
     if (!file) return;
@@ -200,13 +201,10 @@ const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: (
       const { data } = await api.post('/upload-extract', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      // Após extrair o texto, mandamos o texto para o Chat em 'background' ou processamos via popup.
-      // Para manter simples, enviamos a string extraída diretamente como mensagem pro Chat processar (Batch)
-      alert(`Extrato processado! O AI analisou ${data.text.split('\\n').length} linhas. Feche a janela e peça para o Chat registrar.`);
+      showToast(`Extrato processado! O AI analisou ${data.text.split('\n').length} linhas. Feche a janela e peça para o Chat registrar.`, 'success');
       setFile(null);
-      // Aqui faríamos idealmente: api.post('/chat', { message: `Analyze this extract:\n${data.text}` });
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Erro na importação');
+      showToast(err.response?.data?.error || 'Erro na importação', 'error');
     } finally {
       setLoading(false);
       onClose();
@@ -216,7 +214,7 @@ const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: (
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ ...card, maxWidth: '500px', width: '100%', background: '#050505', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+      <div className="glass" style={{ ...cardContentStyle, maxWidth: '500px', width: '100%', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
           <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Importar Extrato</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}><X /></button>
@@ -246,6 +244,41 @@ const UploadModal = ({ onClose, onRefresh }: { onClose: () => void, onRefresh: (
   );
 };
 
+// ─── Modal de Confirmação de Exclusão ───────────────────────────────────────
+const DeleteModal = ({ onClose, onConfirm }: { onClose: () => void, onConfirm: () => void }) => {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 3000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div className="glass" style={{ ...cardContentStyle, maxWidth: '400px', width: '100%', border: '1px solid rgba(239, 68, 68, 0.4)', textAlign: 'center' }}>
+        <div style={{ width: '64px', height: '64px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <Trash2 color="#ef4444" size={32} />
+        </div>
+        <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Excluir Transação?</h3>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '32px' }}>
+          Esta ação não pode ser desfeita. Tem certeza que deseja remover este registro do seu histórico?
+        </p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ flex: 1, padding: '14px', background: '#ef4444', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)' }}
+            onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            Sim, Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Dashboard Principal ──────────────────────────────────────────────────────
 const Dashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -253,11 +286,13 @@ const Dashboard = () => {
   const [goals, setGoals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTrans, setEditingTrans] = useState<Transaction | null>(null);
+  const [transToDelete, setTransToDelete] = useState<number | null>(null);
   const [showCatManager, setShowCatManager] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
   const [insights, setInsights] = useState<any>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [filterText, setFilterText] = useState('');
+  const { showToast } = useToast();
 
   const fetchData = async () => {
     try {
@@ -288,11 +323,14 @@ const Dashboard = () => {
   useEffect(() => { fetchData(); fetchInsights(); }, []);
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Excluir esta transação permanente?')) return;
     try {
       await api.delete(`/transactions/${id}`);
       fetchData();
-    } catch (err) { console.error(err); }
+      showToast('Transação excluída com sucesso.', 'success');
+      setTransToDelete(null);
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Erro ao excluir', 'error');
+    }
   };
 
   const handleUpdate = async (data: Transaction) => {
@@ -377,6 +415,13 @@ const Dashboard = () => {
         />
       )}
 
+      {transToDelete && (
+        <DeleteModal
+          onClose={() => setTransToDelete(null)}
+          onConfirm={() => handleDelete(transToDelete)}
+        />
+      )}
+
       {/* Hero Stats */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', margin: 0 }}>Visão Geral</h2>
@@ -396,7 +441,7 @@ const Dashboard = () => {
           { label: 'Gastos Totais', value: fmt(totalGastos), icon: <TrendingDown size={24} />, color: '#f43f5e' },
           { label: 'Guardado em Metas', value: fmt(goals.reduce((sum, g) => sum + g.current, 0)), icon: <Target size={24} />, color: '#8b5cf6' },
         ].map((c, i) => (
-          <div key={i} style={{ ...card, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div key={i} className="glass" style={{ ...cardContentStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>{c.label}</p>
               <p style={{ fontSize: '32px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>{c.value}</p>
@@ -406,9 +451,35 @@ const Dashboard = () => {
         ))}
       </div>
 
+      {/* Spending Pattern Alerts — per category */}
+      {(() => {
+        const gastoTotal = totalGastos;
+        const alertas = Object.entries(gastosPorCat)
+          .filter(([, v]) => gastoTotal > 0 && (v as number) / gastoTotal > 0.35)
+          .map(([cat, v]) => ({ cat, pct: Math.round(((v as number) / gastoTotal) * 100) }));
+        if (!alertas.length) return null;
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <AlertCircle size={18} color="#f43f5e" />
+              <span style={{ fontWeight: 800, fontSize: '16px', color: '#f43f5e' }}>Alertas de Padrão de Gastos</span>
+            </div>
+            {alertas.map(({ cat, pct }) => (
+              <div key={cat} style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.25)', borderRadius: '16px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '15px' }}>⚠️ Gasto elevado em <span style={{ color: '#f87171' }}>{cat}</span></div>
+                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Representa {pct}% dos seus gastos totais — acima do recomendado (35%).</div>
+                </div>
+                <div style={{ background: 'rgba(244,63,94,0.2)', borderRadius: '12px', padding: '8px 14px', fontWeight: 900, color: '#f43f5e', fontSize: '18px' }}>{pct}%</div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       {/* Smart Insights Panel */}
       {insights ? (
-        <div style={{ ...card, background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(0,0,0,0.8))', border: '1px solid rgba(239, 68, 68, 0.2)', position: 'relative', overflow: 'hidden' }}>
+        <div className="glass" style={{ ...cardContentStyle, background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(0,0,0,0.8))', border: '1px solid rgba(239, 68, 68, 0.2)', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(239, 68, 68, 0.1)', filter: 'blur(50px)', borderRadius: '50%' }} />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -449,16 +520,37 @@ const Dashboard = () => {
           <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
             "{insights.motivation}"
           </div>
+
+          {/* Action Plan Section */}
+          <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <Target size={18} color="#f87171" />
+              <span style={{ fontWeight: 800, fontSize: '16px' }}>Plano de Ação Inteligente</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                totalGastos > totalGanhos && `💸 Seus gastos (${fmt(totalGastos)}) superam seus ganhos. Corte gastos não essenciais imediatamente.`,
+                insights.savings_tip && `💡 ${insights.savings_tip}`,
+                insights.predictive_tip && `📈 ${insights.predictive_tip}`,
+                insights.fraud_alert && `🔔 Comportamento fora do padrão detectado. Revise lançamentos recentes suspeitos.`,
+                goals.length > 0 && goals.some((g: any) => g.current < g.target * 0.5) && `🎯 Algumas metas estão abaixo de 50%. Considere aportes adicionais este mês.`
+              ].filter(Boolean).map((item, i) => (
+                <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
+                  {item as string}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : loadingInsights ? (
-        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: '12px', color: '#f87171' }}>
+        <div className="glass" style={{ ...cardContentStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: '12px', color: '#f87171' }}>
           <Loader2 className="animate-spin" /> Gerando insights personalizados...
         </div>
       ) : null}
 
       {/* Analytics Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
-        <div style={card}>
+        <div className="glass" style={cardContentStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <div style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '10px', color: '#ef4444' }}>
               <BarChart3 size={20} />
@@ -480,7 +572,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div style={card}>
+        <div className="glass" style={cardContentStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <div style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: '#ffffff' }}>
               <PieChart size={20} />
@@ -501,7 +593,7 @@ const Dashboard = () => {
       </div>
 
       {/* Transactions Table */}
-      <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+      <div className="glass" style={{ ...cardContentStyle, padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 800 }}>Movimentações Recentes</h2>
@@ -569,7 +661,13 @@ const Dashboard = () => {
                   <td style={{ padding: '20px 32px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'rgba(255,255,255,0.6)' }}>
                       <Calendar size={14} />
-                      {new Date(t.data).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                      {(() => {
+                        // Avoid UTC timezone offset shifting the date by parsing directly
+                        const dateStr = t.data ? t.data.split('T')[0] : '';
+                        if (!dateStr) return '';
+                        const [y, m, d] = dateStr.split('-');
+                        return `${d}/${m}/${y}`;
+                      })()}
                     </div>
                   </td>
                   <td style={{ padding: '20px 32px' }}>
@@ -595,7 +693,7 @@ const Dashboard = () => {
                         <Pencil size={16} />
                       </button>
                       <button
-                        onClick={() => handleDelete(t.id)}
+                        onClick={() => setTransToDelete(t.id)}
                         style={{ padding: '8px', background: 'rgba(244,63,94,0.1)', border: 'none', borderRadius: '10px', color: '#f43f5e', cursor: 'pointer' }}
                       >
                         <Trash2 size={16} />

@@ -56,6 +56,9 @@ const Investments = () => {
                         { name: 'Poupança', value: '6.17', change: 'Aproximação Média', trend: 'neutral' },
                         { name: 'S&P 500 (Média)', value: '10.50', change: '+1.2%', trend: 'up' },
                     ]);
+
+                    // Atualiza a calculadora para a Selic atual da API (Hoje ~15%)
+                    setRate(selic);
                 }
             } catch (err) {
                 console.error('Erro ao buscar taxas reais:', err);
@@ -92,29 +95,23 @@ const Investments = () => {
         setMonthlyContributionRaw(parseCurrency(formatted));
     };
 
-    const cardStyle = {
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '24px',
-        padding: '32px'
-    };
+    const cardContentStyle = { padding: '32px' };
 
     return (
-        <div style={{ color: 'white' }}>
-            <div style={{ marginBottom: '40px' }}>
-                <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '8px' }}>Investimentos Inteligentes</h1>
+        <div style={{ color: 'white', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '80px' }}>
+            <div className="glass" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.02em', color: 'white' }}>Investimentos Inteligentes</h1>
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px' }}>Simule seu futuro com taxas atualizadas em tempo real.</p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' }}>
                 {/* Simulador */}
-                <div style={cardStyle}>
+                <div className="glass" style={cardContentStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-                        <div style={{ padding: '10px', background: 'rgba(59,130,246,0.1)', borderRadius: '12px', color: '#3b82f6' }}>
+                        <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '14px', color: '#ef4444' }}>
                             <Calculator size={24} />
                         </div>
-                        <h3 style={{ fontSize: '20px', fontWeight: 700 }}>Simulador de Liberdade</h3>
+                        <h3 style={{ fontSize: '20px', fontWeight: 800 }}>Simulador de Liberdade</h3>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -157,17 +154,17 @@ const Investments = () => {
                             </div>
                         </div>
 
-                        <div style={{ marginTop: '20px', padding: '24px', background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1))', borderRadius: '20px', border: '1px solid rgba(59,130,246,0.2)' }}>
+                        <div style={{ marginTop: '20px', padding: '24px', background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(0,0,0,0.4))', borderRadius: '20px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>RESULTADO ESTIMADO</p>
-                            <h4 style={{ fontSize: '32px', fontWeight: 900, color: '#60a5fa' }}>R$ {Number(calculateResult()).toLocaleString('pt-BR')}</h4>
+                            <h4 style={{ fontSize: '32px', fontWeight: 900, color: '#f87171' }}>R$ {Number(calculateResult()).toLocaleString('pt-BR')}</h4>
                         </div>
                     </div>
                 </div>
 
                 {/* Market Stats */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <div style={cardStyle}>
-                        <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginBottom: '24px' }}>TAXAS DO DIA (MUNDO REAL)</h3>
+                    <div className="glass" style={cardContentStyle}>
+                        <h3 style={{ fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginBottom: '24px', textTransform: 'uppercase' }}>Taxas do Dia</h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {marketRates.slice(0, 3).map((tax, i) => {
                                 const isSelected = selectedRateName === tax.name;
@@ -181,15 +178,15 @@ const Investments = () => {
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             padding: '16px', borderRadius: '16px',
-                                            background: isSelected ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.02)',
+                                            background: isSelected ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.02)',
                                             cursor: 'pointer',
-                                            border: isSelected ? '1px solid rgba(59,130,246,0.5)' : '1px solid transparent',
+                                            border: isSelected ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid transparent',
                                             transition: 'all 0.2s'
                                         }}
                                         onMouseEnter={e => {
                                             if (!isSelected) {
                                                 e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                                                e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)';
+                                                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
                                             }
                                         }}
                                         onMouseLeave={e => {
@@ -200,7 +197,7 @@ const Investments = () => {
                                         }}
                                         title="Clique para aplicar no simulador"
                                     >
-                                        <span style={{ fontWeight: 700, color: isSelected ? '#60a5fa' : 'white' }}>{tax.name}</span>
+                                        <span style={{ fontWeight: 700, color: isSelected ? '#f87171' : 'white' }}>{tax.name}</span>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontWeight: 800 }}>{Number(tax.value).toFixed(2)}%</div>
                                             <div style={{ fontSize: '12px', color: tax.trend === 'up' ? '#10b981' : tax.trend === 'down' ? '#ef4444' : '#94a3b8' }}>{tax.change}</div>
@@ -217,12 +214,12 @@ const Investments = () => {
                         >Ver Todas as Taxas</button>
                     </div>
 
-                    <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #1e3a8a, #4338ca)', border: 'none' }}>
+                    <div className="glass" style={{ ...cardContentStyle, background: 'rgba(239,68,68,0.05)', borderColor: 'rgba(239,68,68,0.2)', borderLeft: '4px solid #ef4444' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                            <ShieldCheck size={20} />
-                            <span style={{ fontWeight: 700, fontSize: '14px' }}>Dica do Mentor</span>
+                            <div style={{ color: '#ef4444' }}><ShieldCheck size={20} /></div>
+                            <span style={{ fontWeight: 800, fontSize: '14px', textTransform: 'uppercase', color: '#ef4444' }}>Dica do Mentor</span>
                         </div>
-                        <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6 }}>"{currentTip}"</p>
+                        <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, fontWeight: 500 }}>"{currentTip}"</p>
                     </div>
                 </div>
             </div>
@@ -230,9 +227,9 @@ const Investments = () => {
             {/* Modal "Ver Todas as Taxas" */}
             {showAllRates && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                    <div style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '32px' }}>
+                    <div style={{ background: '#050505', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '24px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', backdropFilter: 'blur(32px)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <h2 style={{ fontSize: '24px', fontWeight: 800 }}>Biblioteca de Taxas</h2>
+                            <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#ef4444' }}>Biblioteca de Taxas</h2>
                             <button onClick={() => setShowAllRates(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', padding: '8px', cursor: 'pointer', borderRadius: '50%', color: 'white', display: 'flex' }}><X size={20} /></button>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
@@ -248,11 +245,11 @@ const Investments = () => {
                                         }}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '16px',
-                                            background: isSelected ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
-                                            cursor: 'pointer', border: isSelected ? '1px solid rgba(59,130,246,0.5)' : '1px solid transparent', transition: 'all 0.2s'
+                                            background: isSelected ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                                            cursor: 'pointer', border: isSelected ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid transparent', transition: 'all 0.2s'
                                         }}
                                     >
-                                        <span style={{ fontWeight: 700, color: isSelected ? '#60a5fa' : 'white' }}>{tax.name}</span>
+                                        <span style={{ fontWeight: 700, color: isSelected ? '#f87171' : 'white' }}>{tax.name}</span>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontWeight: 800 }}>{Number(tax.value).toFixed(2)}%</div>
                                         </div>

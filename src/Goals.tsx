@@ -60,7 +60,7 @@ const Goals = () => {
                 name: newGoalName,
                 target: targetNum,
                 current: 0,
-                color: '#3b82f6',
+                color: '#ef4444',
                 icon: 'Target'
             });
             setShowNewGoal(false);
@@ -83,7 +83,8 @@ const Goals = () => {
         if (transactionType === 'add') newCurrent += amountFloat;
         else newCurrent -= amountFloat;
 
-        newCurrent = Math.max(0, newCurrent);
+        // Limita o valor mínimo a 0 e o máximo ao alvo da meta
+        newCurrent = Math.max(0, Math.min(newCurrent, goal.target));
 
         try {
             await api.put(`/goals/${activeGoalId}`, { current: newCurrent });
@@ -93,35 +94,32 @@ const Goals = () => {
         } catch (e) { console.error(e); }
     };
 
-    const cardStyle = {
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '24px',
-        padding: '24px',
-        marginBottom: '20px'
-    };
+    const cardContentStyle = { padding: '24px', marginBottom: '20px' };
 
     const totalSaved = goals.reduce((acc, g) => acc + g.current, 0);
 
-    if (loading) return <div style={{ color: 'white' }}>Carregando metas...</div>;
+    if (loading) return <div style={{ color: 'white', padding: '40px', textAlign: 'center' }}>Carregando metas...</div>;
 
     return (
-        <div style={{ color: 'white' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px' }}>
+        <div style={{ color: 'white', maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '80px' }}>
+            <div className="glass" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '32px' }}>
                 <div>
-                    <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: '8px' }}>Minhas Metas</h1>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px' }}>Defina seus objetivos e acompanhe sua evolução.</p>
+                    <h1 style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '-0.02em', color: 'white' }}>Minhas Metas</h1>
+                    <p style={{ color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>Dê vida aos seus planos com acompanhamento inteligente.</p>
                 </div>
                 {!showNewGoal && (
-                    <button onClick={() => setShowNewGoal(true)} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '14px', padding: '12px 20px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <button
+                        onClick={() => setShowNewGoal(true)}
+                        className="glass"
+                        style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '14px', padding: '12px 24px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.1)' }}
+                    >
                         <Plus size={18} /> Nova Meta
                     </button>
                 )}
             </div>
 
             {showNewGoal && (
-                <div style={{ ...cardStyle, border: '1px solid #3b82f6' }}>
+                <div className="glass" style={{ ...cardContentStyle, border: '1px solid #ef4444' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '16px' }}>Criar Nova Meta</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px, 2fr) minmax(150px, 1fr) auto', gap: '16px', alignItems: 'flex-end' }}>
                         <div>
@@ -136,8 +134,8 @@ const Goals = () => {
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={handleCreateGoal} style={{ padding: '14px 24px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Salvar</button>
-                            <button onClick={() => { setShowNewGoal(false); setGoalError(''); }} style={{ padding: '14px 24px', background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancelar</button>
+                            <button onClick={handleCreateGoal} style={{ padding: '14px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Salvar Meta</button>
+                            <button onClick={() => { setShowNewGoal(false); setGoalError(''); }} style={{ padding: '14px 24px', background: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancelar</button>
                         </div>
                     </div>
                     {goalError && <p style={{ marginTop: '12px', color: '#f87171', fontSize: '13px', fontWeight: 600 }}>⚠ {goalError}</p>}
@@ -145,20 +143,20 @@ const Goals = () => {
             )}
 
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-                <div style={{ ...cardStyle, background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                <div className="glass" style={{ ...cardContentStyle, background: 'rgba(16, 185, 129, 0.05)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                         <Flame color="#10b981" size={20} />
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>METAS ATIVAS</span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#10b981', letterSpacing: '0.05em' }}>METAS ATIVAS</span>
                     </div>
-                    <h4 style={{ fontSize: '24px', fontWeight: 900 }}>{goals.length}</h4>
+                    <div style={{ fontSize: '36px', fontWeight: 900 }}>{goals.length}</div>
                 </div>
-                <div style={cardStyle}>
+                <div className="glass" style={{ ...cardContentStyle }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                        <TrendingUp color="#3b82f6" size={20} />
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#3b82f6' }}>TOTAL GUARDADO</span>
+                        <TrendingUp color="#ef4444" size={20} />
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: '#ef4444', letterSpacing: '0.05em' }}>TOTAL GUARDADO</span>
                     </div>
-                    <h4 style={{ fontSize: '24px', fontWeight: 900 }}>R$ {totalSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h4>
+                    <div style={{ fontSize: '36px', fontWeight: 900 }}>R$ {totalSaved.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 </div>
             </div>
 
@@ -175,7 +173,7 @@ const Goals = () => {
                     const isTransactionActive = activeGoalId === goal.id;
 
                     return (
-                        <div key={goal.id} style={cardStyle}>
+                        <div key={goal.id} className="glass" style={cardContentStyle}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '16px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                     <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: `${goal.color}25`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -192,7 +190,7 @@ const Goals = () => {
                                         <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>R$ {goal.current.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} guardados</div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button onClick={() => { setActiveGoalId(goal.id); setTransactionType('add'); setTransactionAmount(''); }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(16,185,129,0.1)', border: 'none', color: '#10b981', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={18} /></button>
+                                        <button disabled={goal.current >= goal.target} onClick={() => { setActiveGoalId(goal.id); setTransactionType('add'); setTransactionAmount(''); }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: goal.current >= goal.target ? 'rgba(255,255,255,0.05)' : 'rgba(16,185,129,0.1)', border: 'none', color: goal.current >= goal.target ? 'rgba(255,255,255,0.2)' : '#10b981', cursor: goal.current >= goal.target ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={18} /></button>
                                         <button onClick={() => { setActiveGoalId(goal.id); setTransactionType('remove'); setTransactionAmount(''); }} style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(239,68,68,0.1)', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={18} /></button>
                                     </div>
                                 </div>
@@ -218,7 +216,7 @@ const Goals = () => {
                             )}
 
                             <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div style={{ width: `${percent}%`, height: '100%', background: goal.color, borderRadius: '4px', transition: 'width 1s ease-out' }} />
+                                <div style={{ width: `${percent}%`, height: '100%', background: 'linear-gradient(90deg, #b91c1c, #ef4444)', borderRadius: '4px', transition: 'width 1s ease-out' }} />
                             </div>
                         </div>
                     );

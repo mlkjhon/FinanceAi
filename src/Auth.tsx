@@ -11,16 +11,41 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
+    const [requires2FA, setRequires2FA] = useState(false);
+    const [twofaCode, setTwofaCode] = useState('');
+    const [userId, setUserId] = useState<number | null>(null);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
+            if (requires2FA) {
+                // Verify 2FA Code
+                const { data } = await api.post('/auth/verify-2fa', { userId, code: twofaCode });
+                localStorage.setItem('token', data.token);
+                // Mark this device as trusted for 30 days
+                localStorage.setItem(`trusted_device_${formData.email}`, 'true');
+                onLogin(data.user);
+                return;
+            }
+
             const endpoint = isLogin ? '/auth/login' : '/auth/register';
-            const { data } = await api.post(endpoint, formData);
-            localStorage.setItem('token', data.token);
-            onLogin(data.user);
+            // Send email to check if there is a trusted device token locally
+            const payload = isLogin ? { ...formData, trustedDevice: localStorage.getItem(`trusted_device_${formData.email}`) === 'true' } : formData;
+            const { data } = await api.post(endpoint, payload);
+
+            if (data.requires2FA) {
+                setRequires2FA(true);
+                setUserId(data.userId);
+            } else {
+                localStorage.setItem('token', data.token);
+                if (isLogin) {
+                    localStorage.setItem(`trusted_device_${formData.email}`, 'true');
+                }
+                onLogin(data.user);
+            }
         } catch (err: any) {
             console.error('[Auth Exception]:', err);
             const errResponse = err.response?.data;
@@ -60,6 +85,8 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
         fontSize: '15px',
         outline: 'none',
         transition: 'all 0.2s',
+        textAlign: requires2FA ? 'center' as const : 'left' as const,
+        letterSpacing: requires2FA ? '4px' : 'normal',
     };
 
     return (
@@ -69,21 +96,23 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
             padding: '20px', position: 'relative'
         }}>
             {/* Back Button */}
-            <button
-                onClick={() => navigate('/')}
-                style={{
-                    position: 'absolute', top: '32px', left: '32px',
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '12px', padding: '12px', color: 'rgba(255,255,255,0.5)',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-                    fontWeight: 600, fontSize: '14px', transition: 'all 0.2s'
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'white'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
-            >
-                <ArrowLeft size={18} />
-                Voltar para a Home
-            </button>
+            {!requires2FA && (
+                <button
+                    onClick={() => navigate('/')}
+                    style={{
+                        position: 'absolute', top: '32px', left: '32px',
+                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px', padding: '12px', color: 'rgba(255,255,255,0.5)',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                        fontWeight: 600, fontSize: '14px', transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'white'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+                >
+                    <ArrowLeft size={18} />
+                    Voltar para a Home
+                </button>
+            )}
 
             {/* Decorative Glows */}
             <div style={{ position: 'absolute', top: '10%', right: '10%', width: '300px', height: '300px', background: 'rgba(239, 68, 68, 0.1)', filter: 'blur(100px)', borderRadius: '50%' }} />
@@ -96,12 +125,14 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
                         borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         margin: '0 auto 24px', boxShadow: '0 10px 25px rgba(239, 68, 68, 0.3)'
                     }}>
-                        {isLogin ? <User color="white" size={32} /> : <ShieldCheck color="white" size={32} />}
+                        {requires2FA ? <Lock color="white" size={32} /> : (isLogin ? <User color="white" size={32} /> : <ShieldCheck color="white" size={32} />)}
                     </div>
                     <h2 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
-                        {isLogin ? 'Bem-vindo de volta' : 'Crie sua conta'}
+                        {requires2FA ? 'Verificação Segura' : (isLogin ? 'Bem-vindo de volta' : 'Crie sua conta')}
                     </h2>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Gerencie suas finanças com IA</p>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>
+                        {requires2FA ? 'Digite o código de 6 dígitos enviado para seu e-mail.' : 'Gerencie suas finanças com IA'}
+                    </p>
                 </div>
 
                 {error && (
@@ -114,54 +145,71 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
                 )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {!isLogin && (
+                    {requires2FA ? (
                         <div style={{ position: 'relative' }}>
-                            <User style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
+                            <ShieldCheck style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
                             <input
-                                style={inputStyle}
+                                style={{ ...inputStyle, paddingLeft: '48px', paddingRight: '16px' }}
                                 type="text"
-                                placeholder="Como quer ser chamado?"
+                                placeholder="000000"
                                 required
-                                value={formData.nome}
-                                onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                                maxLength={6}
+                                value={twofaCode}
+                                onChange={e => setTwofaCode(e.target.value.replace(/\D/g, ''))}
                             />
                         </div>
+                    ) : (
+                        <>
+                            {!isLogin && (
+                                <div style={{ position: 'relative' }}>
+                                    <User style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
+                                    <input
+                                        style={inputStyle}
+                                        type="text"
+                                        placeholder="Como quer ser chamado?"
+                                        required
+                                        value={formData.nome}
+                                        onChange={e => setFormData({ ...formData, nome: e.target.value })}
+                                    />
+                                </div>
+                            )}
+
+                            <div style={{ position: 'relative' }}>
+                                <Mail style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
+                                <input
+                                    style={inputStyle}
+                                    type="email"
+                                    placeholder="seu@email.com"
+                                    required
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ position: 'relative' }}>
+                                <Lock style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
+                                <input
+                                    style={{ ...inputStyle, paddingRight: '48px' }}
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    required
+                                    value={formData.password}
+                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    style={{
+                                        position: 'absolute', right: '16px', top: '16px',
+                                        background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)',
+                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                        </>
                     )}
-
-                    <div style={{ position: 'relative' }}>
-                        <Mail style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
-                        <input
-                            style={inputStyle}
-                            type="email"
-                            placeholder="seu@email.com"
-                            required
-                            value={formData.email}
-                            onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        />
-                    </div>
-
-                    <div style={{ position: 'relative' }}>
-                        <Lock style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
-                        <input
-                            style={inputStyle}
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            required
-                            value={formData.password}
-                            onChange={e => setFormData({ ...formData, password: e.target.value })}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            style={{
-                                position: 'absolute', right: '16px', top: '16px',
-                                background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)',
-                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}
-                        >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                    </div>
 
                     <button
                         type="submit"
@@ -188,21 +236,32 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
                     >
                         {loading ? <Loader2 className="animate-spin" size={20} /> : (
                             <>
-                                {isLogin ? <LogIn size={18} /> : <UserPlus size={18} />}
-                                {isLogin ? 'Entrar no Sistema' : 'Criar minha Conta'}
+                                {requires2FA ? <ShieldCheck size={18} /> : (isLogin ? <LogIn size={18} /> : <UserPlus size={18} />)}
+                                {requires2FA ? 'Verificar e Entrar' : (isLogin ? 'Entrar no Sistema' : 'Criar minha Conta')}
                             </>
                         )}
                     </button>
+                    {requires2FA && (
+                        <button
+                            type="button"
+                            onClick={() => { setRequires2FA(false); setTwofaCode(''); setError(''); }}
+                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer', marginTop: '-10px' }}
+                        >
+                            Cancelar
+                        </button>
+                    )}
                 </form>
 
-                <div style={{ marginTop: '32px', textAlign: 'center' }}>
-                    <button
-                        onClick={() => setIsLogin(!isLogin)}
-                        style={{ background: 'none', border: 'none', color: '#f87171', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
-                    >
-                        {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça Login'}
-                    </button>
-                </div>
+                {!requires2FA && (
+                    <div style={{ marginTop: '32px', textAlign: 'center' }}>
+                        <button
+                            onClick={() => setIsLogin(!isLogin)}
+                            style={{ background: 'none', border: 'none', color: '#f87171', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
+                        >
+                            {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça Login'}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

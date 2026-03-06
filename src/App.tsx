@@ -13,6 +13,7 @@ import { MessageSquare, LayoutDashboard, LogOut, ShieldCheck, User as UserIcon, 
 import Social from './Social';
 import Spreadsheet from './Spreadsheet';
 import api from './api';
+import { ToastProvider, useToast } from './components/Toast';
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 interface User {
@@ -24,12 +25,58 @@ interface User {
   avatarUrl?: string;
 }
 
+// ─── Componente Lembrete 2FA ──────────────────────────────────────────────────
+const TwoFaReminder = ({ userName, onClose }: { userName: string, onClose: () => void }) => {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.3s ease-out' }}>
+      <div className="glass" style={{ maxWidth: '450px', width: '100%', padding: '32px', textAlign: 'center', border: '1px solid rgba(245, 158, 11, 0.4)', position: 'relative' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+          ✕
+        </button>
+        <div style={{ width: '64px', height: '64px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <ShieldCheck color="#f59e0b" size={32} />
+        </div>
+        <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '8px' }}>Ative o 2FA, {userName.split(' ')[0]}!</h3>
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.6 }}>
+          Notamos que você ainda não ativou a <strong>Autenticação de 2 Fatores (2FA)</strong>.
+          Para a segurança dos seus dados financeiros, recomendamos fortemente ativar esta proteção.
+        </p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+            Lembrar depois
+          </button>
+          <Link to="/profile" onClick={onClose} style={{ flex: 1, padding: '14px', background: 'linear-gradient(135deg, #f59e0b, #d97706)', textDecoration: 'none', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 8px 16px rgba(245, 158, 11, 0.2)' }}>
+            Ativar Agora
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Layout Principal ────────────────────────────────────────────────────────
 const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
   const location = useLocation();
   const isAdmin = user.role === 'ADMIN';
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [show2FAReminder, setShow2FAReminder] = useState(false);
+
+  useEffect(() => {
+    // Verificar lembrete 2FA
+    if (user && !(user as any).twofa_enabled) {
+      const lastReminder = sessionStorage.getItem(`2fa_reminder_${user.id}`);
+      // Mostrar se nunca mostrou nesta mesma aba (session)
+      if (!lastReminder) {
+        setShow2FAReminder(true);
+      }
+    }
+  }, [user]);
+
+  const handleClose2FAReminder = () => {
+    sessionStorage.setItem(`2fa_reminder_${user.id}`, 'true');
+    setShow2FAReminder(false);
+  };
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -79,6 +126,8 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
       minHeight: '100vh', background: 'radial-gradient(circle at top right, #0a0a0a, #000000)',
       color: 'white', fontFamily: "'Inter', sans-serif"
     }}>
+      {show2FAReminder && <TwoFaReminder userName={user.nome} onClose={handleClose2FAReminder} />}
+
       {/* Background Glows */}
       <div style={{ position: 'fixed', top: '-10%', right: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(239, 68, 68, 0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'fixed', bottom: '-10%', left: '-5%', width: '30%', height: '30%', background: 'radial-gradient(circle, rgba(153, 27, 27, 0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
@@ -112,54 +161,55 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
           {navItem('/social', 'Social', Users)}
           {navItem('/spreadsheet', 'Planilha', TrendingUp)}
           {isAdmin && navItem('/admin', 'Admin', ShieldCheck)}
-          {navItem('/profile', 'Perfil', UserIcon)}
         </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(5, 5, 5, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', padding: '6px', borderRadius: '100px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
           <div style={{ position: 'relative' }}>
             <button
-              onClick={() => { setShowNotifications(!showNotifications); if (unreadCount > 0) markAsRead(); }}
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', padding: '8px', borderRadius: '50%', color: 'white', display: 'flex' }}
+              onClick={() => {
+                setShowNotifications(!showNotifications);
+                if (!showNotifications && unreadCount > 0) markAsRead();
+              }}
+              style={{
+                background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px',
+                borderRadius: '50%', transition: 'all 0.2s', position: 'relative'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'white'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; e.currentTarget.style.background = 'transparent'; }}
             >
-              <Bell size={18} />
+              <Bell size={20} />
               {unreadCount > 0 && (
-                <div style={{ position: 'absolute', top: 0, right: 0, width: '14px', height: '14px', background: '#ef4444', borderRadius: '50%', border: '2px solid #0a0e1a', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                  {unreadCount}
-                </div>
+                <span style={{ position: 'absolute', top: '8px', right: '8px', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', border: '2px solid #050505' }} />
               )}
             </button>
-
             {showNotifications && (
-              <div style={{
-                position: 'absolute', top: '100%', right: 0, marginTop: '16px', width: '340px',
-                background: 'rgba(0, 0, 0, 0.95)', backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.6), 0 0 20px rgba(239, 68, 68, 0.1)', zIndex: 200, padding: '16px',
-                animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <span style={{ fontWeight: 800, fontSize: '15px', letterSpacing: '-0.01em' }}>Notificações</span>
-                  {unreadCount > 0 && <span style={{ fontSize: '10px', background: 'rgba(239,68,68,0.2)', color: '#f87171', padding: '2px 8px', borderRadius: '10px', fontWeight: 700 }}>{unreadCount} novas</span>}
+              <div className="glass" style={{ position: 'absolute', right: 0, top: 'calc(100% + 12px)', width: '320px', padding: '0', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Bell size={16} color="#ef4444" /> Notificações
+                  </h3>
+                  {unreadCount > 0 && <span style={{ fontSize: '11px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', padding: '4px 8px', borderRadius: '10px', fontWeight: 700 }}>{unreadCount} novas</span>}
                 </div>
-                <div style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
+                <div style={{ maxHeight: '360px', overflowY: 'auto', padding: '12px' }}>
                   {notifications.length === 0 ? (
-                    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-                      <div style={{ opacity: 0.2, marginBottom: '12px' }}><Bell size={32} style={{ margin: '0 auto' }} /></div>
-                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', margin: 0 }}>Sua caixa de entrada está vazia</p>
+                    <div style={{ padding: '40px 20px', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+                      <Bell size={32} style={{ marginBottom: '12px', opacity: 0.5 }} />
+                      <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>Nenhuma notificação</p>
                     </div>
                   ) : (
                     notifications.map(n => (
                       <div key={n.id} style={{
-                        padding: '12px 14px', borderRadius: '12px',
-                        background: n.lida ? 'rgba(255,255,255,0.02)' : 'rgba(239, 68, 68,0.08)',
-                        marginBottom: '8px', border: n.lida ? '1px solid transparent' : '1px solid rgba(239, 68, 68,0.15)',
+                        padding: '12px 14px', borderRadius: '16px',
+                        background: n.lida ? 'transparent' : 'rgba(239, 68, 68,0.05)',
+                        marginBottom: '4px', border: '1px solid transparent',
                         transition: 'all 0.2s', cursor: 'default'
                       }}>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                          <div style={{ width: '8px', height: '8px', background: n.lida ? 'transparent' : '#ef4444', borderRadius: '50%', marginTop: '5px', flexShrink: 0 }} />
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                          <div style={{ width: '8px', height: '8px', background: n.lida ? 'rgba(255,255,255,0.1)' : '#ef4444', borderRadius: '50%', marginTop: '6px', flexShrink: 0 }} />
                           <div style={{ flex: 1 }}>
-                            <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.9)', lineHeight: '1.4' }}>{n.mensagem}</p>
-                            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '4px', display: 'block', fontWeight: 500 }}>{new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • Justo agora</span>
+                            <p style={{ margin: 0, fontSize: '13px', color: n.lida ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.9)', lineHeight: '1.5' }}>{n.mensagem}</p>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '6px', display: 'block', fontWeight: 500 }}>{n.createdat ? new Date(n.createdat).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                           </div>
                         </div>
                       </div>
@@ -170,17 +220,28 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '4px 4px 4px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {user.avatarUrl && <img src={user.avatarUrl} alt="Avatar" style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} />}
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>{user.nome}</span>
-            <button
-              onClick={onLogout}
-              style={{ padding: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', borderRadius: '10px', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              title="Sair"
-            >
-              <LogOut size={16} />
-            </button>
-          </div>
+          <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)' }} />
+
+          <Link to="/profile" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', padding: '4px 16px 4px 6px', background: 'transparent', borderRadius: '100px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="Avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: 'white', fontSize: '12px', fontWeight: 800 }}>{user.nome.charAt(0).toUpperCase()}</span>
+              </div>
+            )}
+            <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>{user.nome.split(' ')[0]}</span>
+          </Link>
+
+          <button
+            onClick={onLogout}
+            style={{ padding: '0', background: 'transparent', border: 'none', color: 'rgba(239,68,68,0.6)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '50%', transition: 'all 0.2s', marginLeft: '4px' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; e.currentTarget.style.color = '#ef4444'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(239,68,68,0.6)'; }}
+            title="Sair"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </header>
 
@@ -200,6 +261,23 @@ const AppLayout = ({ user, onLogout }: { user: User; onLogout: () => void }) => 
           </Routes>
         </div>
       </main>
+
+      {/* Security & Privacy Banner */}
+      <footer style={{
+        borderTop: '1px solid rgba(255,255,255,0.04)',
+        padding: '12px 32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        background: 'rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(10px)',
+      }}>
+        <ShieldCheck size={14} color="#10b981" />
+        <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>
+          Dados protegidos por <strong style={{ color: 'rgba(255,255,255,0.5)' }}>criptografia de ponta a ponta</strong>. Nunca compartilhamos suas informações financeiras.
+        </span>
+      </footer>
     </div>
   );
 };
@@ -305,28 +383,30 @@ const App = () => {
   }
 
   return (
-    <Router>
-      {showOnboarding && user && (
-        <Onboarding
-          userName={user.nome}
-          onComplete={completeOnboarding}
-          loading={onboardingLoading}
-          error={onboardingError}
-        />
-      )}
-      <Routes>
-        {!user ? (
-          <>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<Auth onLogin={handleLogin} />} />
-            <Route path="/auth/login" element={<Auth onLogin={handleLogin} />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </>
-        ) : (
-          <Route path="*" element={<AppLayout user={user} onLogout={handleLogout} />} />
+    <ToastProvider>
+      <Router>
+        {showOnboarding && user && (
+          <Onboarding
+            userName={user.nome}
+            onComplete={completeOnboarding}
+            loading={onboardingLoading}
+            error={onboardingError}
+          />
         )}
-      </Routes>
-    </Router>
+        <Routes>
+          {!user ? (
+            <>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<Auth onLogin={handleLogin} />} />
+              <Route path="/auth/login" element={<Auth onLogin={handleLogin} />} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </>
+          ) : (
+            <Route path="*" element={<AppLayout user={user} onLogout={handleLogout} />} />
+          )}
+        </Routes>
+      </Router>
+    </ToastProvider>
   );
 };
 

@@ -941,7 +941,7 @@ function fallbackParser(text) {
   }
 
   // Dashboard
-  if (/resumo|dashboard|gastei|lucro|saldo/.test(lower)) {
+  if (/resumo|dashboard|lucro|saldo/.test(lower)) {
     return { tipo: 'dashboard_resumo' };
   }
 

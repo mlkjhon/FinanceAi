@@ -26,7 +26,7 @@ const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
                 const { data } = await api.post('/auth/verify-2fa', { userId, code: twofaCode });
                 localStorage.setItem('token', data.token);
                 // Mark this device as trusted for 30 days
-                localStorage.setItem(`trusted_device_${data.user.id}`, 'true');
+                localStorage.setItem(`trusted_device_${formData.email}`, 'true');
                 onLogin(data.user);
                 return;
             }

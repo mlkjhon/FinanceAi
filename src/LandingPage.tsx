@@ -1,476 +1,214 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Canvas } from '@react-three/fiber';
-import { Environment } from '@react-three/drei';
-import Hero3DElement from './components/Hero3DElement';
-import { motion, useScroll, useTransform } from 'framer-motion';
 import {
-    ShieldCheck,
-    MessageSquare,
-    LayoutDashboard,
-    Zap,
-    ChevronRight,
-    ArrowRight,
-    BrainCircuit,
-    Star,
-    UserCircle2,
-    Scale,
-    Lock,
-    TrendingUp,
-    Quote
+    ShieldCheck, TrendingUp, BarChart3, Bot, Smartphone, Lock,
+    Zap, ArrowRight, CheckCircle, ChevronRight, Play, Calculator
 } from 'lucide-react';
 
-const card = {
-    background: 'rgba(255, 255, 255, 0.02)',
-    backdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    borderRadius: '24px',
-    padding: '32px',
-};
-
-const FinanceCalculator = () => {
-    const [income, setIncome] = React.useState(5000);
-
-    const needs = income * 0.5;
-    const wants = income * 0.3;
-    const savings = income * 0.2;
-
-    const barStyle = (color: string, width: string) => ({
-        height: '12px',
-        background: color,
-        width: width,
-        borderRadius: '10px',
-        transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-    });
-
-    return (
-        <div style={{ position: 'relative', zIndex: 10 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                <div>
-                    <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', fontSize: '14px', marginBottom: '16px', fontWeight: 600 }}>SUA RENDA MENSAL</label>
-                    <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', fontSize: '24px', fontWeight: 800, color: '#ef4444' }}>R$</span>
-                        <input
-                            type="number"
-                            value={income}
-                            onChange={(e) => setIncome(Number(e.target.value))}
-                            style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '24px 24px 24px 60px', color: 'white', fontSize: '32px', fontWeight: 900, outline: 'none' }}
-                        />
-                    </div>
-                    <input
-                        type="range"
-                        min="1000"
-                        max="30000"
-                        step="500"
-                        value={income}
-                        onChange={(e) => setIncome(Number(e.target.value))}
-                        style={{ width: '100%', marginTop: '24px', cursor: 'pointer', accentColor: '#ef4444' }}
-                    />
-                </div>
-
-                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '14px', lineHeight: 1.6 }}>
-                    A regra 50/30/20 é um método simples para gerenciar seu orçamento: 50% para necessidades, 30% desejos e 20% para o futuro.
-                </p>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', justifyContent: 'center', marginTop: '40px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#f87171' }}>Necessidades (50%)</span>
-                        <span style={{ fontSize: '20px', fontWeight: 800 }}>{fmt(needs)}</span>
-                    </div>
-                    <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-                        <div style={barStyle('#f87171', '50%')} />
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#fca5a5' }}>Desejos (30%)</span>
-                        <span style={{ fontSize: '20px', fontWeight: 800 }}>{fmt(wants)}</span>
-                    </div>
-                    <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-                        <div style={barStyle('#fca5a5', '30%')} />
-                    </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#ffffff' }}>Investimentos (20%)</span>
-                        <span style={{ fontSize: '20px', fontWeight: 800 }}>{fmt(savings)}</span>
-                    </div>
-                    <div style={{ width: '100%', height: '12px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }}>
-                        <div style={barStyle('#ffffff', '20%')} />
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} `;
-
-const LandingPage = () => {
+const LandingPage: React.FC = () => {
     const navigate = useNavigate();
+    const [scrolled, setScrolled] = useState(false);
+    const [calcData, setCalcData] = useState({ renda: 5000, gastos: 3500, meses: 12 });
 
-    const { scrollYProgress } = useScroll();
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
-    // Parallax effect: image moves up slower than the page
-    const y = useTransform(scrollYProgress, [0, 1], [0, -300]);
-    // Rotation effect: slight rotation as you scroll down
-    const rotate = useTransform(scrollYProgress, [0, 1], [0, -15]);
-    // Opacity: fades out slightly when reaching the end
-    const opacity = useTransform(scrollYProgress, [0, 0.8, 1], [0.9, 0.4, 0]);
-
-    const featureCardStyle = {
-        background: 'rgba(5, 5, 5, 0.4)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '24px',
-        padding: '40px',
-        transition: 'all 0.3s ease',
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: '20px'
+    const scrollTo = (id: string) => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const sectionStyle = {
-        padding: '120px 20px',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        position: 'relative' as const,
-        zIndex: 10
-    };
+    const econMensal = calcData.renda - calcData.gastos;
+    const projecao = econMensal > 0 ? econMensal * calcData.meses : 0;
 
     return (
         <div style={{
-            minHeight: '100vh',
-            background: '#040404', // Slightly lighter/noisier black for depth
-            backgroundImage: 'radial-gradient(circle at top right, rgba(239, 68, 68, 0.03) 0%, transparent 40%), radial-gradient(circle at bottom left, rgba(255, 255, 255, 0.02) 0%, transparent 40%)',
-            color: 'white',
-            fontFamily: "'Inter', sans-serif",
-            overflowX: 'hidden',
-            position: 'relative'
+            minHeight: '100vh', background: '#020202', color: 'white',
+            fontFamily: "'Inter', sans-serif", overflowX: 'hidden'
         }}>
+            {/* Background gradients */}
+            <div style={{ position: 'fixed', top: '-20%', right: '-10%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(239,68,68,0.08) 0%, transparent 60%)', pointerEvents: 'none', zIndex: 0 }} />
+            <div style={{ position: 'fixed', bottom: '-20%', left: '-10%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(153,27,27,0.06) 0%, transparent 60%)', pointerEvents: 'none', zIndex: 0 }} />
 
-            {/* Background Interactive 3D Art - Fixed to follow scroll */}
-            <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', zIndex: 0, pointerEvents: 'none', opacity: 0.8 }}>
-                <Canvas shadows camera={{ position: [0, 0, 8], fov: 45 }}>
-                    <Environment preset="city" />
-                    <React.Suspense fallback={null}>
-                        <Hero3DElement />
-                    </React.Suspense>
-                </Canvas>
-            </div>
-
-
-            {/* Foreground Content */}
-            <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'auto' }}>
-
-                {/* Hero Section */}
-                <motion.section
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    style={{
-                        ...sectionStyle,
-                        minHeight: '100vh',
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '120px 20px 60px 20px',
-                        position: 'relative',
-                        zIndex: 10
-                    }}
-                >
-                    <div style={{
-                        width: '100%',
-                        maxWidth: '1200px',
-                        margin: '0 auto',
-                        display: 'flex',
-                        flexDirection: 'row',
-                        flexWrap: 'wrap-reverse',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '40px'
-                    }}>
-                        {/* Text Content */}
-                        <div style={{ flex: '1 1 500px', maxWidth: '600px', zIndex: 10 }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '100px', marginBottom: '24px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                                <Zap size={16} color="#ef4444" />
-                                <span style={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', letterSpacing: '0.05em' }}>INTELIGÊNCIA ARTIFICIAL FINANCEIRA</span>
-                            </div>
-                            <h1 style={{ fontSize: 'clamp(48px, 8vw, 84px)', fontWeight: 900, lineHeight: 1.05, marginBottom: '24px', letterSpacing: '-0.03em', textShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-                                Domine suas finanças com mente <span style={{ color: '#ef4444', textShadow: '0 0 40px rgba(239,68,68,0.4)' }}>clara</span>.
-                            </h1>
-                            <p style={{ fontSize: 'clamp(18px, 2vw, 22px)', color: 'rgba(255, 255, 255, 0.5)', marginBottom: '40px', lineHeight: 1.6, maxWidth: '500px' }}>
-                                O Mentor definitivo que une análise fria e dados precisos para o crescimento real do seu patrimônio.
-                            </p>
-                            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                                <button
-                                    onClick={() => navigate('/auth')}
-                                    style={{
-                                        padding: '18px 32px',
-                                        background: '#ef4444',
-                                        border: 'none',
-                                        borderRadius: '100px',
-                                        color: 'white',
-                                        fontSize: '16px',
-                                        fontWeight: 700,
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        boxShadow: '0 10px 30px rgba(239,68,68,0.3)',
-                                        transition: 'transform 0.2s',
-                                        flex: '1 1 auto',
-                                        justifyContent: 'center'
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                                >
-                                    Iniciar Jornada <ChevronRight size={20} />
-                                </button>
-                                <button
-                                    style={{
-                                        padding: '18px 32px',
-                                        background: 'rgba(255,255,255,0.05)',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: '100px',
-                                        color: 'white',
-                                        fontSize: '16px',
-                                        fontWeight: 600,
-                                        cursor: 'pointer',
-                                        transition: 'background 0.2s',
-                                        flex: '1 1 auto',
-                                        justifyContent: 'center'
-                                    }}
-                                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                >
-                                    Conhecer a Lógica
-                                </button>
-                            </div>
-                        </div>
+            {/* Navbar */}
+            <nav style={{
+                position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+                padding: '20px 48px', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
+                background: scrolled ? 'rgba(5,5,5,0.85)' : 'transparent',
+                backdropFilter: scrolled ? 'blur(24px)' : 'none',
+                borderBottom: scrolled ? '1px solid rgba(255,255,255,0.05)' : '1px solid transparent',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #ef4444, #991b1b)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 24px rgba(239,68,68,0.4)' }}>
+                        <ShieldCheck size={24} color="white" />
                     </div>
-                </motion.section>
+                    <span style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '-0.02em' }}>
+                        Finance<span style={{ color: '#f87171' }}>AI</span>
+                    </span>
+                </div>
+                <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }} className="hidden md:flex">
+                    {['Funcionalidades', 'Simulador', 'Segurança'].map(item => (
+                        <button key={item} onClick={() => scrollTo(item.toLowerCase())} style={{
+                            background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer',
+                            fontSize: '14px', fontWeight: 600, transition: 'color 0.2s'
+                        }} onMouseEnter={e => e.currentTarget.style.color = 'white'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}>
+                            {item}
+                        </button>
+                    ))}
+                    <button onClick={() => navigate('/auth')} style={{
+                        padding: '10px 24px', background: 'white', color: 'black', border: 'none', borderRadius: '100px',
+                        fontSize: '14px', fontWeight: 800, cursor: 'pointer', transition: 'transform 0.2s'
+                    }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                        Entrar
+                    </button>
+                </div>
+            </nav>
 
-                {/* Features Section */}
-                <motion.section
-                    initial={{ opacity: 0, y: 80 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    id="features"
-                    style={{ ...sectionStyle, padding: '160px 20px', background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.8) 20%)' }}
-                >
-                    <div style={{ maxWidth: '600px', marginBottom: '80px' }}>
-                        <h2 style={{ fontSize: '56px', fontWeight: 900, marginBottom: '24px', lineHeight: 1.1 }}>A Razão acima do Impulso.</h2>
-                        <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '20px', lineHeight: 1.6 }}>Nossa IA não apenas lê planilhas, ela orienta e prevê como suas ações de hoje moldam o amanhã.</p>
+            <main style={{ position: 'relative', zIndex: 1, paddingTop: '160px' }}>
+                {/* Hero */}
+                <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', textAlign: 'center', marginBottom: '160px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '100px', color: '#f87171', fontSize: '13px', fontWeight: 700, marginBottom: '32px' }}>
+                        <Zap size={14} /> Nova versão 2.0 liberada
                     </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px' }}>
-                        <div style={featureCardStyle}>
-                            <div style={{ width: '56px', height: '56px', background: 'rgba(239,68,68,0.1)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f87171' }}>
-                                <MessageSquare size={28} />
-                            </div>
-                            <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Mentor via Chat</h3>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6, fontSize: '16px' }}>Esqueça formulários engessados. Converse como conversaria com um consultor. Ele entende, organiza e planeja.</p>
-                        </div>
-
-                        <div style={featureCardStyle}>
-                            <div style={{ width: '56px', height: '56px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }}>
-                                <LayoutDashboard size={28} />
-                            </div>
-                            <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Visão Analítica</h3>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6, fontSize: '16px' }}>Dashboards limpos, escuros e diretos ao ponto. Saiba onde seu dinheiro está sem ruídos visuais.</p>
-                        </div>
-
-                        <div style={featureCardStyle}>
-                            <div style={{ width: '56px', height: '56px', background: 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(153,27,27,0.1))', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444' }}>
-                                <BrainCircuit size={28} />
-                            </div>
-                            <h3 style={{ fontSize: '24px', fontWeight: 800 }}>Previsões Preditivas</h3>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6, fontSize: '16px' }}>O Mentor identifica padrões nocivos de gastos e alerta quando você está fugindo do comportamento saudável.</p>
-                        </div>
+                    <h1 style={{ fontSize: '72px', fontWeight: 900, lineHeight: 1.1, letterSpacing: '-0.04em', margin: '0 0 32px' }}>
+                        A inteligência artificial do<br />
+                        <span style={{ background: 'linear-gradient(135deg, #ef4444, #fca5a5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                            seu dinheiro.
+                        </span>
+                    </h1>
+                    <p style={{ fontSize: '20px', color: 'rgba(255,255,255,0.5)', maxWidth: '600px', margin: '0 auto 48px', lineHeight: 1.6 }}>
+                        Assuma o controle total das suas finanças com Open Finance integrado, alertas inteligentes e análises preditivas feitas pelo Google Gemini.
+                    </p>
+                    <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                        <button onClick={() => navigate('/auth/register')} style={{ padding: '20px 40px', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', border: 'none', borderRadius: '100px', color: 'white', fontSize: '16px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 12px 32px rgba(239,68,68,0.3)', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                            Começar Gratuitamente <ArrowRight size={20} />
+                        </button>
+                        <button onClick={() => scrollTo('funcionalidades')} style={{ padding: '20px 40px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '100px', color: 'white', fontSize: '16px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                            <Play size={20} /> Ver Demo
+                        </button>
                     </div>
-                </motion.section>
+                </section>
 
-                {/* Finance Calculator Section */}
-                <motion.section
-                    initial={{ opacity: 0, y: 80 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    style={{ ...sectionStyle, padding: '160px 20px', display: 'flex', justifyContent: 'flex-end' }}
-                >
-                    <div style={{ width: '100%', maxWidth: '500px' }}>
-                        <div style={{ marginBottom: '48px' }}>
-                            <h2 style={{ fontSize: '48px', fontWeight: 800, marginBottom: '16px', lineHeight: 1.1 }}>Simulador<br /><span style={{ color: '#ef4444' }}>Estratégico</span></h2>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '18px' }}>O primeiro passo da sabedoria é saber distribuir recursos.</p>
-                        </div>
-
-                        <div style={{
-                            background: 'rgba(0, 0, 0, 0.6)',
-                            backdropFilter: 'blur(30px)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            borderRadius: '32px',
-                            padding: '48px',
-                            boxShadow: '0 40px 100px rgba(0,0,0,0.5)'
-                        }}>
-                            <FinanceCalculator />
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* Como Funciona Section */}
-                <motion.section
-                    initial={{ opacity: 0, y: 80 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    style={{ ...sectionStyle, padding: '120px 20px', background: '#020202' }}
-                >
+                {/* Features */}
+                <section id="funcionalidades" style={{ maxWidth: '1200px', margin: '0 auto', padding: '80px 32px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                        <h2 style={{ fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 900, marginBottom: '24px', lineHeight: 1.1 }}>Como o Mentor <span style={{ color: '#ef4444' }}>Funciona</span></h2>
-                        <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: 'clamp(16px, 2vw, 20px)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>Três passos simples para transformar caos em clareza estratégica.</p>
+                        <h2 style={{ fontSize: '40px', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 16px' }}>Tudo o que você precisa.</h2>
+                        <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.4)' }}>Uma suíte completa para gestão financeira profissional.</p>
                     </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '40px', maxWidth: '1000px', margin: '0 auto' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
                         {[
-                            { step: '01', title: 'Conecte', desc: 'Sincronize ou insira seus dados financeiros de forma totalmente segura e anônima.' },
-                            { step: '02', title: 'Analise', desc: 'A IA varre suas finanças buscando padrões ocultos e gargalos invisíveis a olho nu.' },
-                            { step: '03', title: 'Domine', desc: 'Receba um plano de ação claro, frio e focado em metas reais, sem achismos.' }
-                        ].map((item, idx) => (
-                            <div key={idx} style={{ textAlign: 'center', padding: '32px', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ fontSize: '48px', fontWeight: 900, color: 'rgba(239, 68, 68, 0.2)', marginBottom: '16px' }}>{item.step}</div>
-                                <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '16px' }}>{item.title}</h3>
-                                <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6 }}>{item.desc}</p>
+                            { icon: <Bot size={28} />, title: 'Chatbot IA Especializado', desc: 'Converse com seus dados financeiros. O Gemini analisa seu histórico para dar dicas personalizadas em tempo real.', color: '#ef4444' },
+                            { icon: <TrendingUp size={28} />, title: 'Previsões Algorítmicas', desc: 'Nossa IA projeta seus gastos pros próximos meses baseada em machine learning e médias móveis.', color: '#8b5cf6' },
+                            { icon: <Smartphone size={28} />, title: 'Open Finance Real-Time', desc: 'Conecte contas do Itaú, Nubank, Banco do Brasil e outros para sync automático via APIs seguras.', color: '#10b981' },
+                            { icon: <BarChart3 size={28} />, title: 'Relatórios Recharts', desc: 'Gráficos interativos impressionantes. Exporte dados em xlsx/CSV com um clique.', color: '#f59e0b' },
+                            { icon: <ShieldCheck size={28} />, title: 'Alertas Inteligentes', desc: 'Seja notificado no WhatsApp caso um gasto atípico ocorra ou contas sejam duplicadas.', color: '#06b6d4' },
+                            { icon: <Lock size={28} />, title: 'Segurança RLS', desc: 'Infraestrutura isolada no Supabase. Criptografia ponta a ponta e Row Level Security impenetrável.', color: '#a855f7' },
+                        ].map((f, i) => (
+                            <div key={i} style={{ padding: '32px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '24px', transition: 'transform 0.3s, background 0.3s' }} onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }} onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}>
+                                <div style={{ width: '56px', height: '56px', background: `${f.color}15`, borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: f.color, marginBottom: '24px' }}>
+                                    {f.icon}
+                                </div>
+                                <h3 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 12px' }}>{f.title}</h3>
+                                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
                             </div>
                         ))}
                     </div>
-                </motion.section>
+                </section>
 
-                {/* Benefícios (Segurança & Razão) Section */}
-                <motion.section
-                    initial={{ opacity: 0, y: 80 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    style={{ ...sectionStyle, padding: '160px 20px', display: 'flex', flexDirection: 'column', gap: '60px' }}
-                >
-                    <div style={{ maxWidth: '600px', marginBottom: '40px' }}>
-                        <h2 style={{ fontSize: 'clamp(36px, 5vw, 56px)', fontWeight: 900, marginBottom: '24px', lineHeight: 1.1 }}>Por que escolher a <span style={{ borderBottom: '4px solid #ef4444' }}>Razão Pura</span>?</h2>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
-                        <div style={{ ...featureCardStyle, background: 'linear-gradient(135deg, rgba(20,20,20,0.8), rgba(0,0,0,1))' }}>
-                            <div style={{ width: '56px', height: '56px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', marginBottom: '24px' }}>
-                                <Scale size={28} />
+                {/* Calc */}
+                <section id="simulador" style={{ maxWidth: '1200px', margin: '0 auto', padding: '120px 32px' }}>
+                    <div style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.05), rgba(153,27,27,0.1))', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '32px', padding: '60px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }} className="md:grid-cols-1">
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                                <div style={{ padding: '10px', background: 'rgba(239,68,68,0.15)', borderRadius: '12px', color: '#f87171' }}><Calculator size={24} /></div>
+                                <h2 style={{ fontSize: '32px', fontWeight: 900, margin: 0, letterSpacing: '-0.02em' }}>Simulador de Impacto</h2>
                             </div>
-                            <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '16px' }}>Decisões Sem Emoção</h3>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6 }}>O dinheiro obedece à matemática, não aos sentimentos. Nossa IA extirpa o viés emocional das suas escolhas, garantindo que você compre ou invista baseado apenas em lógica e dados reais.</p>
-                        </div>
-
-                        <div style={{ ...featureCardStyle, background: 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(0,0,0,1))', border: '1px solid rgba(239,68,68,0.2)' }}>
-                            <div style={{ width: '56px', height: '56px', background: 'rgba(239,68,68,0.2)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', marginBottom: '24px' }}>
-                                <Lock size={28} />
-                            </div>
-                            <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '16px' }}>Segurança Absoluta</h3>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.7)', lineHeight: 1.6 }}>Seus dados estão protegidos por criptografia de ponta a ponta. Não vendemos suas informações. O FinanceAI é um cofre digital onde apenas você e seu Mentor têm a chave.</p>
-                        </div>
-
-                        <div style={{ ...featureCardStyle, background: 'linear-gradient(135deg, rgba(20,20,20,0.8), rgba(0,0,0,1))' }}>
-                            <div style={{ width: '56px', height: '56px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', marginBottom: '24px' }}>
-                                <TrendingUp size={28} />
-                            </div>
-                            <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '16px' }}>Crescimento Estratégico</h3>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.5)', lineHeight: 1.6 }}>Não focamos apenas em cortar gastos pequenos. O objetivo é a expansão do seu patrimônio com previsões de cenário e mapeamento de juros compostos a seu favor.</p>
-                        </div>
-                    </div>
-                </motion.section>
-
-                {/* Social Proof / Testimonials Section */}
-                <motion.section
-                    initial={{ opacity: 0, y: 80 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    style={{ ...sectionStyle, padding: '120px 20px', background: '#020202', borderTop: '1px solid rgba(255,255,255,0.05)' }}
-                >
-                    <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-                        <h2 style={{ fontSize: 'clamp(36px, 5vw, 48px)', fontWeight: 900, marginBottom: '24px', lineHeight: 1.1 }}>Quem confia na <span style={{ color: '#ef4444' }}>lógica</span></h2>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
-                        {[
-                            { quote: "Antes eu investia pelo que lia nas notícias. O FinanceAI me mostrou que a matemática da minha renda exigia uma estratégia muito mais conservadora. Mudou meu jogo.", author: "Marcos T.", role: "Engenheiro de Software" },
-                            { quote: "Impressionante como a IA funciona como um CFO pessoal. Os relatórios são frios, duros, mas exatamente o que eu precisava para parar de me sabotar financeiramente.", author: "Elena R.", role: "Empresária" },
-                            { quote: "A interface é absurdamente premium e os conselhos do chat parecem vir de um especialista sênior de Wall Street. Indispensável.", author: "Lucas M.", role: "Médico" }
-                        ].map((testimonial, idx) => (
-                            <div key={idx} style={{ padding: '40px', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', position: 'relative' }}>
-                                <Quote size={40} color="rgba(239, 68, 68, 0.2)" style={{ position: 'absolute', top: '24px', left: '24px' }} />
-                                <p style={{ fontSize: '18px', lineHeight: 1.6, color: 'rgba(255,255,255,0.8)', marginBottom: '32px', position: 'relative', zIndex: 1, paddingTop: '24px' }}>"{testimonial.quote}"</p>
+                            <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: '32px' }}>
+                                Mês após mês, usuários do FinanceAI economizam em média 20% extras cortando gastos invisíveis através de nossas análises prontas.
+                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 <div>
-                                    <div style={{ fontWeight: 800, fontSize: '16px' }}>{testimonial.author}</div>
-                                    <div style={{ color: 'rgba(239, 68, 68, 0.8)', fontSize: '14px', fontWeight: 600 }}>{testimonial.role}</div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em' }}>Sua Renda (Mensal)</label>
+                                        <span style={{ fontWeight: 800 }}>R$ {calcData.renda.toLocaleString()}</span>
+                                    </div>
+                                    <input type="range" min="1000" max="30000" step="500" value={calcData.renda} onChange={e => setCalcData(d => ({ ...d, renda: parseInt(e.target.value) }))} style={{ width: '100%', accentColor: '#ef4444' }} />
+                                </div>
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em' }}>Seus Gastos</label>
+                                        <span style={{ fontWeight: 800 }}>R$ {calcData.gastos.toLocaleString()}</span>
+                                    </div>
+                                    <input type="range" min="500" max="25000" step="500" value={calcData.gastos} onChange={e => setCalcData(d => ({ ...d, gastos: parseInt(e.target.value) }))} style={{ width: '100%', accentColor: '#ef4444' }} />
+                                </div>
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em' }}>Horizonte de Tempo</label>
+                                        <span style={{ fontWeight: 800 }}>{calcData.meses} meses</span>
+                                    </div>
+                                    <input type="range" min="1" max="60" step="1" value={calcData.meses} onChange={e => setCalcData(d => ({ ...d, meses: parseInt(e.target.value) }))} style={{ width: '100%', accentColor: '#ef4444' }} />
                                 </div>
                             </div>
-                        ))}
+                        </div>
+                        <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', padding: '40px', textAlign: 'center' }}>
+                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', fontWeight: 700, letterSpacing: '0.08em', margin: '0 0 16px' }}>AO LONGO DE {calcData.meses} MESES, VOCÊ ACUMULA:</p>
+                            <p style={{ fontSize: '56px', fontWeight: 900, margin: 0, letterSpacing: '-0.04em', background: econMensal > 0 ? 'linear-gradient(135deg, #10b981, #34d399)' : 'linear-gradient(135deg, #ef4444, #fca5a5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                R$ {projecao.toLocaleString()}
+                            </p>
+                            <p style={{ margin: '16px 0 0', fontSize: '15px', color: 'rgba(255,255,255,0.5)' }}>
+                                {econMensal > 0 ? 'Sem investimentos. Só com gestão.' : 'Atenção: seus gastos superam sua renda. Precisamos agir.'}
+                            </p>
+                            <button onClick={() => navigate('/auth/register')} style={{ marginTop: '32px', width: '100%', padding: '16px', background: 'transparent', border: '1px solid rgba(239,68,68,0.5)', borderRadius: '100px', color: '#f87171', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.1)'; }}>
+                                Começar Plano Real Agora
+                            </button>
+                        </div>
                     </div>
-                </motion.section>
+                </section>
 
-                {/* Final CTA Section */}
-                <motion.section
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true, amount: 0.5 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    style={{ ...sectionStyle, textAlign: 'center', padding: '160px 20px', background: 'radial-gradient(circle at center, rgba(153,27,27,0.15) 0%, transparent 70%)' }}
-                >
-                    <h2 style={{ fontSize: '64px', fontWeight: 900, marginBottom: '24px', letterSpacing: '-0.02em', textShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>
-                        O poder de decidir<br />com confiança.
-                    </h2>
-                    <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '22px', marginBottom: '48px', maxWidth: '600px', margin: '0 auto 48px auto' }}>Junte-se ao novo padrão de gestão financeira focado em inteligência e design premium.</p>
-                    <button
-                        onClick={() => navigate('/auth')}
-                        style={{
-                            padding: '24px 64px',
-                            background: 'white',
-                            border: 'none',
-                            borderRadius: '100px',
-                            color: '#050505',
-                            fontSize: '20px',
-                            fontWeight: 800,
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            boxShadow: '0 20px 50px rgba(255,255,255,0.15)',
-                            transition: 'all 0.3s'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
-                        onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                    >
-                        Entrar no Sistema <ArrowRight size={24} />
-                    </button>
-                </motion.section>
+                <section id="seguranca" style={{ padding: '80px 32px', textAlign: 'center' }}>
+                    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                        <h2 style={{ fontSize: '40px', fontWeight: 900, letterSpacing: '-0.02em', margin: '0 0 24px' }}>Bank-grade security.</h2>
+                        <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.4)', marginBottom: '48px', lineHeight: 1.6 }}>Nós não vendemos seus dados. Seu banco de dados privado roda em isolamento dentro da infraestrutura do Supabase.</p>
+                        <div style={{ display: 'flex', gap: '40px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            {['Criptografia AES-256', 'Policies RLS Estritas', 'Open Finance Seguro', 'Não lemos seus dados'].map(s => (
+                                <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontWeight: 700 }}>
+                                    <CheckCircle size={20} /> <span style={{ color: 'white' }}>{s}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
 
                 {/* Footer */}
-                <footer style={{ padding: '60px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '15px', background: '#000000' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '24px' }}>
-                        <ShieldCheck size={24} color="#ef4444" />
-                        <span style={{ fontWeight: 800, color: 'white' }}>FinanceAI</span>
+                <footer style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '60px 32px 40px', marginTop: '80px' }}>
+                    <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '32px' }}>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                                <ShieldCheck size={28} color="#ef4444" />
+                                <span style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '-0.02em' }}>Finance<span style={{ color: '#f87171' }}>AI</span></span>
+                            </div>
+                            <p style={{ color: 'rgba(255,255,255,0.3)', margin: 0, fontSize: '14px' }}>© 2026 FinanceAI Inc. All rights reserved.</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '48px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <h4 style={{ fontWeight: 800, color: 'white', margin: '0 0 8px' }}>Produto</h4>
+                                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer' }}>Features</span>
+                                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer' }}>Preços</span>
+                                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer' }}>Open Finance</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <h4 style={{ fontWeight: 800, color: 'white', margin: '0 0 8px' }}>Empresa</h4>
+                                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer' }}>Sobre</span>
+                                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer' }}>Blog</span>
+                                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer' }}>Segurança</span>
+                            </div>
+                        </div>
                     </div>
-                    © 2026 Inteligência Financeira. Todos os direitos reservados.
                 </footer>
-            </div>
-
-            <style>{`
-@keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-#features { position: relative; z-index: 10; }
-section { position: relative; z-index: 10; }
-`}</style>
+            </main>
         </div>
     );
 };

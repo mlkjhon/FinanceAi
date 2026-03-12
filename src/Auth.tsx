@@ -1,267 +1,287 @@
 import React, { useState } from 'react';
-import api from './api';
-import { Mail, Lock, User, ArrowRight, Loader2, ShieldCheck, ArrowLeft, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+import { ShieldCheck, Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User } from 'lucide-react';
+import { useAuth } from './hooks/useAuth';
 
-const Auth = ({ onLogin }: { onLogin: (user: any) => void }) => {
-    const [isLogin, setIsLogin] = useState(true);
+const loginSchema = z.object({
+    email: z.string().email('E-mail inválido'),
+    password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+});
+
+const registerSchema = z.object({
+    nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100),
+    email: z.string().email('E-mail inválido'),
+    password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
+    confirmPassword: z.string(),
+}).refine(d => d.password === d.confirmPassword, {
+    message: 'Senhas não coincidem',
+    path: ['confirmPassword'],
+});
+
+interface AuthProps {
+    onLogin?: (user: any) => void;
+}
+
+const inputStyle = {
+    width: '100%',
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '14px',
+    padding: '14px 14px 14px 44px',
+    color: 'white',
+    fontSize: '15px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+    boxSizing: 'border-box' as const,
+};
+
+const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+    const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
+    const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [formData, setFormData] = useState({ nome: '', email: '', password: '' });
-    const [showPassword, setShowPassword] = useState(false);
+    const [success, setSuccess] = useState('');
+
+    const [form, setForm] = useState({ nome: '', email: '', password: '', confirmPassword: '' });
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const { signIn, signUp } = useAuth();
     const navigate = useNavigate();
 
-    const [requires2FA, setRequires2FA] = useState(false);
-    const [twofaCode, setTwofaCode] = useState('');
-    const [userId, setUserId] = useState<number | null>(null);
+    const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm(f => ({ ...f, [field]: e.target.value }));
+        setErrors(e2 => ({ ...e2, [field]: '' }));
+        setError('');
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
+        setSuccess('');
 
-        try {
-            if (requires2FA) {
-                // Verify 2FA Code
-                const { data } = await api.post('/auth/verify-2fa', { userId, code: twofaCode });
-                localStorage.setItem('token', data.token);
-                // Mark this device as trusted for 30 days
-                localStorage.setItem(`trusted_device_${formData.email}`, 'true');
-                onLogin(data.user);
+        if (mode === 'login') {
+            const result = loginSchema.safeParse(form);
+            if (!result.success) {
+                const errs: Record<string, string> = {};
+                result.error.errors.forEach(e => { errs[e.path[0]] = e.message; });
+                setErrors(errs);
                 return;
             }
-
-            const endpoint = isLogin ? '/auth/login' : '/auth/register';
-            // Send email to check if there is a trusted device token locally
-            const payload = isLogin ? { ...formData, trustedDevice: localStorage.getItem(`trusted_device_${formData.email}`) === 'true' } : formData;
-            const { data } = await api.post(endpoint, payload);
-
-            if (data.requires2FA) {
-                setRequires2FA(true);
-                setUserId(data.userId);
-            } else {
-                localStorage.setItem('token', data.token);
-                if (isLogin) {
-                    localStorage.setItem(`trusted_device_${formData.email}`, 'true');
-                }
-                onLogin(data.user);
-            }
-        } catch (err: any) {
-            console.error('[Auth Exception]:', err);
-            const errResponse = err.response?.data;
-
-            if (err.code === 'ERR_NETWORK') {
-                setError('Erro de conexão: Verifique se o servidor backend está rodando na porta 5000.');
-            } else if (errResponse) {
-                const msg = typeof errResponse.error === 'string' ? errResponse.error :
-                    (errResponse.details || errResponse.message || 'Erro inesperado no servidor.');
-                setError(msg);
-            } else {
-                setError('Erro na autenticação. Status: ' + (err.response?.status || 'Desconhecido'));
-            }
-        } finally {
+            setLoading(true);
+            const { error } = await signIn(form.email, form.password);
             setLoading(false);
+            if (error) { setError(error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos' : error.message); return; }
+            navigate('/dashboard');
+
+        } else if (mode === 'register') {
+            const result = registerSchema.safeParse(form);
+            if (!result.success) {
+                const errs: Record<string, string> = {};
+                result.error.errors.forEach(e => { errs[e.path[0] as string] = e.message; });
+                setErrors(errs);
+                return;
+            }
+            setLoading(true);
+            const { error } = await signUp(form.email, form.password, form.nome);
+            setLoading(false);
+            if (error) { setError(error.message); return; }
+            setSuccess('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
+            setMode('login');
+
+        } else if (mode === 'forgot') {
+            if (!form.email) { setErrors({ email: 'Informe seu e-mail' }); return; }
+            setLoading(true);
+            const { supabase } = await import('./lib/supabase');
+            const { error } = await supabase.auth.resetPasswordForEmail(form.email, { redirectTo: `${window.location.origin}/auth` });
+            setLoading(false);
+            if (error) { setError(error.message); return; }
+            setSuccess('E-mail de recuperação enviado!');
         }
     };
 
-    const glassStyle = {
-        background: 'rgba(255, 255, 255, 0.02)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '32px',
-        padding: '48px',
-        width: '100%',
-        maxWidth: '460px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-    };
-
-    const inputStyle = {
-        width: '100%',
-        padding: '16px 16px 16px 48px',
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: '16px',
-        color: 'white',
-        fontSize: '15px',
-        outline: 'none',
-        transition: 'all 0.2s',
-        textAlign: requires2FA ? 'center' as const : 'left' as const,
-        letterSpacing: requires2FA ? '4px' : 'normal',
-    };
+    const iconStyle = { position: 'absolute' as const, left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' as const };
 
     return (
         <div style={{
-            minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'radial-gradient(circle at top right, #3f0909, #050505)', color: 'white',
-            padding: '20px', position: 'relative'
+            minHeight: '100vh',
+            background: 'radial-gradient(circle at top right, rgba(239,68,68,0.08) 0%, transparent 40%), #040404',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px', fontFamily: "'Inter', sans-serif",
         }}>
-            {/* Back Button */}
-            {!requires2FA && (
-                <button
-                    onClick={() => navigate('/')}
-                    style={{
-                        position: 'absolute', top: '32px', left: '32px',
-                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '12px', padding: '12px', color: 'rgba(255,255,255,0.5)',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-                        fontWeight: 600, fontSize: '14px', transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'white'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
-                >
-                    <ArrowLeft size={18} />
-                    Voltar para a Home
-                </button>
-            )}
+            {/* Background glow */}
+            <div style={{ position: 'fixed', top: '10%', right: '10%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(239,68,68,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '10%', left: '10%', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(153,27,27,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-            {/* Decorative Glows */}
-            <div style={{ position: 'absolute', top: '10%', right: '10%', width: '300px', height: '300px', background: 'rgba(239, 68, 68, 0.1)', filter: 'blur(100px)', borderRadius: '50%' }} />
-            <div style={{ position: 'absolute', bottom: '10%', left: '10%', width: '300px', height: '300px', background: 'rgba(153, 27, 27, 0.1)', filter: 'blur(100px)', borderRadius: '50%' }} />
-
-            <div style={glassStyle}>
+            <div style={{ width: '100%', maxWidth: '460px', position: 'relative', zIndex: 1 }}>
+                {/* Logo */}
                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <div style={{
-                        width: '64px', height: '64px', background: 'linear-gradient(135deg, #ef4444, #991b1b)',
-                        borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        margin: '0 auto 24px', boxShadow: '0 10px 25px rgba(239, 68, 68, 0.3)'
-                    }}>
-                        {requires2FA ? <Lock color="white" size={32} /> : (isLogin ? <User color="white" size={32} /> : <ShieldCheck color="white" size={32} />)}
+                    <div style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, #ef4444, #991b1b)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 0 40px rgba(239,68,68,0.3)' }}>
+                        <ShieldCheck size={32} color="white" />
                     </div>
-                    <h2 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '8px' }}>
-                        {requires2FA ? 'Verificação Segura' : (isLogin ? 'Bem-vindo de volta' : 'Crie sua conta')}
-                    </h2>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>
-                        {requires2FA ? 'Digite o código de 6 dígitos enviado para seu e-mail.' : 'Gerencie suas finanças com IA'}
+                    <h1 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.02em', margin: 0 }}>
+                        Finance<span style={{ color: '#f87171' }}>AI</span>
+                    </h1>
+                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', marginTop: '8px' }}>
+                        {mode === 'login' ? 'Acesse sua conta segura' : mode === 'register' ? 'Crie sua conta gratuita' : 'Recuperar acesso'}
                     </p>
                 </div>
 
-                {error && (
-                    <div style={{
-                        padding: '14px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
-                        borderRadius: '12px', color: '#f87171', fontSize: '14px', marginBottom: '24px', textAlign: 'center'
-                    }}>
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {requires2FA ? (
-                        <div style={{ position: 'relative' }}>
-                            <ShieldCheck style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
-                            <input
-                                style={{ ...inputStyle, paddingLeft: '48px', paddingRight: '16px' }}
-                                type="text"
-                                placeholder="000000"
-                                required
-                                maxLength={6}
-                                value={twofaCode}
-                                onChange={e => setTwofaCode(e.target.value.replace(/\D/g, ''))}
-                            />
-                        </div>
-                    ) : (
-                        <>
-                            {!isLogin && (
-                                <div style={{ position: 'relative' }}>
-                                    <User style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
-                                    <input
-                                        style={inputStyle}
-                                        type="text"
-                                        placeholder="Como quer ser chamado?"
-                                        required
-                                        value={formData.nome}
-                                        onChange={e => setFormData({ ...formData, nome: e.target.value })}
-                                    />
-                                </div>
-                            )}
-
-                            <div style={{ position: 'relative' }}>
-                                <Mail style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
-                                <input
-                                    style={inputStyle}
-                                    type="email"
-                                    placeholder="seu@email.com"
-                                    required
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                />
-                            </div>
-
-                            <div style={{ position: 'relative' }}>
-                                <Lock style={{ position: 'absolute', left: '16px', top: '16px', color: 'rgba(255,255,255,0.2)' }} size={18} />
-                                <input
-                                    style={{ ...inputStyle, paddingRight: '48px' }}
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="••••••••"
-                                    required
-                                    value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                />
+                {/* Card */}
+                <div style={{
+                    background: 'rgba(10,10,10,0.9)',
+                    backdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '28px',
+                    padding: '40px',
+                }}>
+                    {/* Mode tabs */}
+                    {mode !== 'forgot' && (
+                        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: '14px', padding: '4px', marginBottom: '32px' }}>
+                            {(['login', 'register'] as const).map(m => (
                                 <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    key={m}
+                                    onClick={() => { setMode(m); setError(''); setSuccess(''); setErrors({}); }}
                                     style={{
-                                        position: 'absolute', right: '16px', top: '16px',
-                                        background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)',
-                                        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        flex: 1, padding: '10px', border: 'none', borderRadius: '10px', cursor: 'pointer',
+                                        fontSize: '14px', fontWeight: 700, transition: 'all 0.2s',
+                                        background: mode === m ? 'rgba(239,68,68,0.2)' : 'transparent',
+                                        color: mode === m ? '#f87171' : 'rgba(255,255,255,0.4)',
                                     }}
                                 >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    {m === 'login' ? 'Entrar' : 'Registrar'}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Alerts */}
+                    {error && (
+                        <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '12px', padding: '14px', marginBottom: '20px', fontSize: '14px', color: '#f87171' }}>
+                            {error}
+                        </div>
+                    )}
+                    {success && (
+                        <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', padding: '14px', marginBottom: '20px', fontSize: '14px', color: '#34d399' }}>
+                            {success}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {/* Nome field for register */}
+                        {mode === 'register' && (
+                            <div>
+                                <label style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>NOME COMPLETO</label>
+                                <div style={{ position: 'relative' }}>
+                                    <User size={16} style={iconStyle} />
+                                    <input
+                                        type="text" placeholder="Seu nome" value={form.nome} onChange={set('nome')}
+                                        style={{ ...inputStyle, borderColor: errors.nome ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)' }}
+                                        onFocus={e => e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'}
+                                        onBlur={e => e.currentTarget.style.borderColor = errors.nome ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}
+                                    />
+                                </div>
+                                {errors.nome && <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px' }}>{errors.nome}</p>}
+                            </div>
+                        )}
+
+                        {/* Email */}
+                        <div>
+                            <label style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>E-MAIL</label>
+                            <div style={{ position: 'relative' }}>
+                                <Mail size={16} style={iconStyle} />
+                                <input
+                                    type="email" placeholder="seu@email.com" value={form.email} onChange={set('email')}
+                                    style={{ ...inputStyle, borderColor: errors.email ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)' }}
+                                    onFocus={e => e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'}
+                                    onBlur={e => e.currentTarget.style.borderColor = errors.email ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}
+                                />
+                            </div>
+                            {errors.email && <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px' }}>{errors.email}</p>}
+                        </div>
+
+                        {/* Password */}
+                        {mode !== 'forgot' && (
+                            <div>
+                                <label style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>SENHA</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Lock size={16} style={iconStyle} />
+                                    <input
+                                        type={showPass ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={set('password')}
+                                        style={{ ...inputStyle, paddingRight: '48px', borderColor: errors.password ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)' }}
+                                        onFocus={e => e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'}
+                                        onBlur={e => e.currentTarget.style.borderColor = errors.password ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}
+                                    />
+                                    <button type="button" onClick={() => setShowPass(p => !p)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', padding: '4px' }}>
+                                        {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                                {errors.password && <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px' }}>{errors.password}</p>}
+                            </div>
+                        )}
+
+                        {/* Confirm password */}
+                        {mode === 'register' && (
+                            <div>
+                                <label style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', display: 'block', marginBottom: '8px' }}>CONFIRMAR SENHA</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Lock size={16} style={iconStyle} />
+                                    <input
+                                        type={showPass ? 'text' : 'password'} placeholder="••••••••" value={form.confirmPassword} onChange={set('confirmPassword')}
+                                        style={{ ...inputStyle, paddingRight: '48px', borderColor: errors.confirmPassword ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)' }}
+                                        onFocus={e => e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'}
+                                        onBlur={e => e.currentTarget.style.borderColor = errors.confirmPassword ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}
+                                    />
+                                </div>
+                                {errors.confirmPassword && <p style={{ color: '#f87171', fontSize: '12px', marginTop: '6px' }}>{errors.confirmPassword}</p>}
+                            </div>
+                        )}
+
+                        {/* Forgot password link */}
+                        {mode === 'login' && (
+                            <div style={{ textAlign: 'right', marginTop: '-8px' }}>
+                                <button type="button" onClick={() => { setMode('forgot'); setError(''); setErrors({}); }} style={{ background: 'none', border: 'none', color: 'rgba(239,68,68,0.7)', fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>
+                                    Esqueci minha senha
                                 </button>
                             </div>
-                        </>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        style={{
-                            padding: '16px',
-                            background: 'linear-gradient(135deg, #ef4444, #991b1b)',
-                            border: 'none',
-                            borderRadius: '16px',
-                            color: 'white',
-                            fontSize: '16px',
-                            fontWeight: 700,
-                            cursor: loading ? 'default' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '10px',
-                            marginTop: '10px',
-                            boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)',
-                            transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={e => !loading && (e.currentTarget.style.transform = 'translateY(-2px)')}
-                        onMouseLeave={e => !loading && (e.currentTarget.style.transform = 'translateY(0)')}
-                    >
-                        {loading ? <Loader2 className="animate-spin" size={20} /> : (
-                            <>
-                                {requires2FA ? <ShieldCheck size={18} /> : (isLogin ? <LogIn size={18} /> : <UserPlus size={18} />)}
-                                {requires2FA ? 'Verificar e Entrar' : (isLogin ? 'Entrar no Sistema' : 'Criar minha Conta')}
-                            </>
                         )}
-                    </button>
-                    {requires2FA && (
-                        <button
-                            type="button"
-                            onClick={() => { setRequires2FA(false); setTwofaCode(''); setError(''); }}
-                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer', marginTop: '-10px' }}
-                        >
-                            Cancelar
-                        </button>
-                    )}
-                </form>
 
-                {!requires2FA && (
-                    <div style={{ marginTop: '32px', textAlign: 'center' }}>
+                        {/* Submit */}
                         <button
-                            onClick={() => setIsLogin(!isLogin)}
-                            style={{ background: 'none', border: 'none', color: '#f87171', fontWeight: 600, cursor: 'pointer', fontSize: '14px' }}
+                            type="submit"
+                            disabled={loading}
+                            style={{
+                                width: '100%', padding: '16px', background: loading ? 'rgba(239,68,68,0.5)' : 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                                border: 'none', borderRadius: '14px', color: 'white', fontSize: '16px', fontWeight: 700,
+                                cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                boxShadow: '0 8px 24px rgba(239,68,68,0.3)', transition: 'all 0.2s', marginTop: '8px',
+                            }}
+                            onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
                         >
-                            {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça Login'}
+                            {loading ? <Loader2 size={20} className="animate-spin" /> : (
+                                <>
+                                    {mode === 'login' ? 'Entrar no Sistema' : mode === 'register' ? 'Criar Conta' : 'Enviar E-mail'}
+                                    <ArrowRight size={18} />
+                                </>
+                            )}
                         </button>
-                    </div>
-                )}
+
+                        {mode === 'forgot' && (
+                            <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess(''); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '14px', cursor: 'pointer', textAlign: 'center', fontWeight: 600 }}>
+                                Voltar para login
+                            </button>
+                        )}
+                    </form>
+                </div>
+
+                {/* Security badge */}
+                <div style={{ textAlign: 'center', marginTop: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <ShieldCheck size={14} color="#10b981" />
+                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>
+                        Dados protegidos por criptografia AES-256
+                    </span>
+                </div>
             </div>
         </div>
     );

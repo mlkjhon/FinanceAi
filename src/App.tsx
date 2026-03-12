@@ -135,6 +135,7 @@ const App: React.FC = () => {
               <Route path="/" element={<LandingPage />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/login" element={<Auth />} />
+              <Route path="/auth/register" element={<Auth />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           ) : (

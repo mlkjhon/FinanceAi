@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { z } from 'zod';
 import { ShieldCheck, Eye, EyeOff, Loader2, ArrowRight, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
@@ -37,7 +37,10 @@ const inputStyle = {
 };
 
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
-    const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
+    const location = useLocation();
+    const [mode, setMode] = useState<'login' | 'register' | 'forgot'>(
+        location.pathname.includes('register') ? 'register' : 'login'
+    );
     const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -64,7 +67,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             const result = loginSchema.safeParse(form);
             if (!result.success) {
                 const errs: Record<string, string> = {};
-                result.error.errors.forEach(e => { errs[e.path[0]] = e.message; });
+                result.error.issues.forEach((e: any) => { errs[e.path[0] as string] = e.message; });
                 setErrors(errs);
                 return;
             }
@@ -78,7 +81,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             const result = registerSchema.safeParse(form);
             if (!result.success) {
                 const errs: Record<string, string> = {};
-                result.error.errors.forEach(e => { errs[e.path[0] as string] = e.message; });
+                result.error.issues.forEach((e: any) => { errs[e.path[0] as string] = e.message; });
                 setErrors(errs);
                 return;
             }

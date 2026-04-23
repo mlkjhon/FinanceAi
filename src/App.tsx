@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import { ShieldCheck, Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import { ToastProvider } from './components/Toast';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Pages (lazy load)
 import LandingPage from './LandingPage';
@@ -127,23 +128,25 @@ const App: React.FC = () => {
   if (loading) return <LoadingScreen />;
 
   return (
-    <ToastProvider>
-      <Router>
-        <Routes>
-          {!user ? (
-            <>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/login" element={<Auth />} />
-              <Route path="/auth/register" element={<Auth />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </>
-          ) : (
-            <Route path="*" element={<AppLayout profile={profile} onLogout={signOut} />} />
-          )}
-        </Routes>
-      </Router>
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <Router>
+          <Routes>
+            {!user ? (
+              <>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/login" element={<Auth />} />
+                <Route path="/auth/register" element={<Auth />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </>
+            ) : (
+              <Route path="*" element={<AppLayout profile={profile} onLogout={signOut} />} />
+            )}
+          </Routes>
+        </Router>
+      </ToastProvider>
+    </AuthProvider>
   );
 };
 

@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS profiles (
   onboarding_done BOOLEAN DEFAULT FALSE,
   onboarding_data JSONB,
   role TEXT DEFAULT 'USER',
-  twofa_enabled BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

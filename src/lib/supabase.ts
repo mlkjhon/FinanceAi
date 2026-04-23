@@ -32,7 +32,6 @@ export type Database = {
     avatar_url: string | null;
     onboarding_done: boolean;
     role: string;
-    twofa_enabled: boolean;
     created_at: string;
   };
 };

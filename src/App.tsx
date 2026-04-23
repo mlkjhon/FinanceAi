@@ -121,31 +121,38 @@ const AppLayout: React.FC<{ onLogout: () => void; profile: any }> = ({ onLogout,
   );
 };
 
-// ─── Root App ─────────────────────────────────────────────────────────────────
-const App: React.FC = () => {
+// ─── App Content ─────────────────────────────────────────────────────────────
+const AppContent: React.FC = () => {
   const { user, profile, loading, signOut } = useAuth();
 
   if (loading) return <LoadingScreen />;
 
   return (
+    <ToastProvider>
+      <Router>
+        <Routes>
+          {!user ? (
+            <>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/login" element={<Auth />} />
+              <Route path="/auth/register" element={<Auth />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </>
+          ) : (
+            <Route path="*" element={<AppLayout profile={profile} onLogout={signOut} />} />
+          )}
+        </Routes>
+      </Router>
+    </ToastProvider>
+  );
+};
+
+// ─── Root App ─────────────────────────────────────────────────────────────────
+const App: React.FC = () => {
+  return (
     <AuthProvider>
-      <ToastProvider>
-        <Router>
-          <Routes>
-            {!user ? (
-              <>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/login" element={<Auth />} />
-                <Route path="/auth/register" element={<Auth />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </>
-            ) : (
-              <Route path="*" element={<AppLayout profile={profile} onLogout={signOut} />} />
-            )}
-          </Routes>
-        </Router>
-      </ToastProvider>
+      <AppContent />
     </AuthProvider>
   );
 };

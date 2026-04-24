@@ -18,7 +18,7 @@ const {
   signToken, hashPassword, comparePassword,
   authMiddleware, adminMiddleware
 } = require('./lib/auth');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const axios = require('axios');
 const multer = require('multer');
 // pdf-parse is lazy-loaded inside the upload endpoint to avoid DOMMatrix crash on startup
 const csv = require('csv-parser');
@@ -27,7 +27,33 @@ const xlsx = require('xlsx');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const upload = multer({ storage: multer.memoryStorage() });
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Helper para chamar o OpenRouter (OpenAI-compatible)
+async function callOpenRouter(prompt, systemPrompt = "") {
+  try {
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "google/gemma-2-9b-it:free", // Usando um modelo gratuito por padrão
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt }
+        ],
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://finance-ai.local", // Opcional para OpenRouter
+          "X-Title": "FinanceAI"
+        }
+      }
+    );
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error('OpenRouter Error:', error.response?.data || error.message);
+    throw error;
+  }
+}
 
 // Proteção Básica de Headers
 app.use(helmet());
@@ -512,12 +538,11 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
 
     let aiResponse;
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const result = await model.generateContent(prompt);
-      const text = result.response.text().replace(/```json/gi, '').replace(/```/g, '').trim();
+      const textResponse = await callOpenRouter(prompt, "Você é um assistente financeiro que responde apenas em JSON puro.");
+      const text = textResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
       aiResponse = JSON.parse(text);
     } catch (e) {
-      console.error('Gemini Error:', e);
+      console.error('OpenRouter Error:', e);
       aiResponse = fallbackParser(message);
     }
 
@@ -807,10 +832,9 @@ app.get('/api/insights', authMiddleware, async (req, res) => {
       "motivation": "Frase de incentivo alinhada ao nível financeiro do usuário"
     }`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(prompt);
-    const textResponse = result.response.text().replace(/```json | ```/g, '').trim();
-    const jsonResponse = JSON.parse(textResponse);
+    const textResponse = await callOpenRouter(prompt, "Você é um consultor financeiro avançado que responde apenas em JSON puro.");
+    const cleanText = textResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const jsonResponse = JSON.parse(cleanText);
 
     res.json({ success: true, insights: jsonResponse });
   } catch (e) {

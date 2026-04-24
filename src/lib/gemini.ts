@@ -1,31 +1,67 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY as string;
+const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY as string;
 
 if (!apiKey) {
-    console.error('❌ VITE_GEMINI_API_KEY não configurada');
+    console.error('❌ VITE_OPENROUTER_API_KEY não configurada');
 }
 
-export const genAI = new GoogleGenerativeAI(apiKey);
-
-export const getModel = (modelName = 'gemini-1.5-flash') =>
-    genAI.getGenerativeModel({ model: modelName });
-
-// Streaming text generation
+// Streaming text generation (OpenRouter SSE)
 export async function* streamGemini(
     prompt: string,
     systemInstruction?: string
 ): AsyncGenerator<string> {
-    const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
-        systemInstruction: systemInstruction || 'Você é o FinanceAI, um assistente financeiro especializado em finanças pessoais brasileiras. Responda em português, de forma clara, objetiva e profissional.',
-    });
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://finance-ai.local",
+                "X-Title": "FinanceAI",
+            },
+            body: JSON.stringify({
+                model: "google/gemma-2-9b-it:free",
+                messages: [
+                    { role: "system", content: systemInstruction || 'Você é o FinanceAI, um assistente financeiro especializado em finanças pessoais brasileiras.' },
+                    { role: "user", content: prompt }
+                ],
+                stream: true,
+            }),
+        });
 
-    const result = await model.generateContentStream(prompt);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || "Erro ao conectar com OpenRouter");
+        }
 
-    for await (const chunk of result.stream) {
-        const text = chunk.text();
-        if (text) yield text;
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+
+        if (!reader) return;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split("\n");
+
+            for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                    const data = line.slice(6);
+                    if (data === "[DONE]") return;
+                    try {
+                        const json = JSON.parse(data);
+                        const text = json.choices[0]?.delta?.content;
+                        if (text) yield text;
+                    } catch (e) {
+                        // Ignorar erros de parse parciais
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error("OpenRouter Stream Error:", error);
+        throw error;
     }
 }
 
@@ -34,11 +70,26 @@ export async function generateText(
     prompt: string,
     systemInstruction?: string
 ): Promise<string> {
-    const model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
-        systemInstruction: systemInstruction || 'Você é o FinanceAI, um assistente financeiro especializado em finanças pessoais brasileiras.',
-    });
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                model: "google/gemma-2-9b-it:free",
+                messages: [
+                    { role: "system", content: systemInstruction || 'Você é o FinanceAI, um assistente financeiro especializado em finanças pessoais brasileiras.' },
+                    { role: "user", content: prompt }
+                ],
+            }),
+        });
 
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+        const data = await response.json();
+        return data.choices[0]?.message?.content || "";
+    } catch (error) {
+        console.error("OpenRouter Error:", error);
+        throw error;
+    }
 }

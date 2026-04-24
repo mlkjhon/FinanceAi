@@ -141,7 +141,7 @@ Você é o FinanceAI, assistente financeiro pessoal. Use esses dados reais para 
             <h1 style={{ fontSize: '22px', fontWeight: 900, margin: 0, letterSpacing: '-0.02em' }}>Chat IA</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
               <div style={{ width: '6px', height: '6px', background: '#10b981', borderRadius: '50%', boxShadow: '0 0 6px #10b981' }} />
-              <span style={{ fontSize: '12px', color: '#34d399', fontWeight: 600 }}>Gemini 1.5 Flash — Online</span>
+              <span style={{ fontSize: '12px', color: '#34d399', fontWeight: 600 }}>OpenRouter (Gemma 2 9B Free) — Online</span>
             </div>
           </div>
         </div>

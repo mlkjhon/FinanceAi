@@ -89,7 +89,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             const { error } = await signUp(form.email, form.password, form.nome);
             setLoading(false);
             if (error) { setError(error.message); return; }
-            setSuccess('Conta criada! Verifique seu e-mail para confirmar o cadastro.');
+            setSuccess('Conta criada com sucesso!');
             setMode('login');
 
         } else if (mode === 'forgot') {
